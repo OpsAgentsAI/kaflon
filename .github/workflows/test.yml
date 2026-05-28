@@ -50,8 +50,8 @@ jobs:
               process.exit(1);
             }
             const title = await page.title();
-            const passCount = await page.$$eval('.case.pass', els => els.length);
-            const failCount = await page.$$eval('.case.fail', els => els.length);
+            const passCount = await page.\$\$eval('.case.pass', els => els.length);
+            const failCount = await page.\$\$eval('.case.fail', els => els.length);
             console.log('Result title:', title);
             console.log('Pass:', passCount, ' Fail:', failCount);
             await browser.close();
