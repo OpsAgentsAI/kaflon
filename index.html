@@ -1108,17 +1108,20 @@
       const qEl = document.getElementById('d-question');
       const subEl = document.getElementById('d-subquestion');
       if (q.kind === 'addsub') {
-        // School-style vertical column layout — decimal points aligned
-        const opPrefix = q.op + ' ';
-        const w = Math.max(q.aDisplay.length, q.bDisplay.length) + opPrefix.length;
-        const pad = (s) => ' '.repeat(w - s.length) + s;
-        const top = pad(q.aDisplay);
-        const mid = opPrefix + pad(q.bDisplay).slice(opPrefix.length);
-        const bar = '─'.repeat(w);
+        // School-style vertical column layout — decimal points aligned via
+        // tabular-nums + right-align (no monospace needed).
+        // The CSS grid: operator-col + digits-col + divider row spanning both.
+        const opColor = q.op === '+' ? '#059669' /* emerald */ : '#dc2626' /* red */;
         qEl.innerHTML =
-          `<pre style="font-family: 'Courier New', ui-monospace, monospace; ` +
-          `text-align: left; line-height: 1.05; display: inline-block; margin: 0; ` +
-          `font-size: 2.5rem; font-weight: 900;">${top}\n${mid}\n${bar}</pre>`;
+          `<div style="display: inline-grid; grid-template-columns: auto auto; ` +
+          `gap: 0.15em 0.5em; font-size: 4rem; font-weight: 900; line-height: 1.05; ` +
+          `font-variant-numeric: tabular-nums;">` +
+          `<span></span><span style="text-align: right;">${q.aDisplay}</span>` +
+          `<span style="color: ${opColor};">${q.op}</span>` +
+          `<span style="text-align: right;">${q.bDisplay}</span>` +
+          `<span style="grid-column: 1 / span 2; border-top: 5px solid #1e293b; ` +
+          `margin-top: 0.1em;"></span>` +
+          `</div>`;
       } else {
         qEl.textContent = q.questionText;
       }
