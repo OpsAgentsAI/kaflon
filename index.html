@@ -180,6 +180,18 @@
         <button data-decimal-mode="mixed-dec" class="decimal-mode-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="decimal-mixed">מעורב</button>
       </div>
 
+      <!-- P3.3 BOSS tier toggle (shown only for mul-dec module) -->
+      <div id="d-mul-dec-tier-row" class="hidden grid grid-cols-3 gap-2">
+        <button data-mul-dec-tier="mul-dec-t1" class="mul-dec-tier-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="tier-1">רמה 1</button>
+        <button data-mul-dec-tier="mul-dec-t2" class="mul-dec-tier-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="tier-2">רמה 2</button>
+        <button data-mul-dec-tier="mul-dec-t3" class="mul-dec-tier-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="tier-3">רמה 3</button>
+      </div>
+
+      <!-- P3.3 BOSS hint banner (shown after first wrong answer or via the hint button) -->
+      <div id="d-mul-dec-hint" class="hidden rounded-2xl bg-amber-50 border-2 border-amber-200 px-4 py-3 text-sm font-bold text-amber-900" data-i18n="mul-dec-hint">
+        💡 ספרו את הספרות אחרי הנקודה בשני הגורמים — סך הספרות אחרי הנקודה בתשובה זהה.
+      </div>
+
       <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl py-8 px-4 text-center select-none space-y-2">
         <div id="d-question" class="math text-6xl sm:text-7xl font-black">0.273</div>
         <div id="d-subquestion" class="text-xl font-bold text-slate-700"></div>
@@ -217,6 +229,45 @@
       <button id="d-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
 
       <div id="d-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
+    </section>
+
+    <!-- NUMBER-LINE DRILL — Ayala P2.2 (tap-on-axis). Always LTR for the axis (math notation). -->
+    <section id="numberline-drill" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+
+      <div class="flex justify-between text-base">
+        <div class="bg-indigo-50 rounded-full px-4 py-2">
+          <span data-i18n="score">ניקוד</span>: <span id="nl-score" class="font-black text-indigo-600">0</span>
+        </div>
+        <div class="bg-orange-50 rounded-full px-4 py-2">
+          <span data-i18n="streak">רצף</span>: <span id="nl-streak" class="font-black text-orange-600">0</span> <span id="nl-streak-emoji">🔥</span>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl py-6 px-4 text-center select-none space-y-2">
+        <div id="nl-prompt" class="text-lg font-bold text-slate-700">לחצי איפה</div>
+        <div id="nl-target" class="math text-7xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">0.4</div>
+      </div>
+
+      <!-- The axis is ALWAYS LTR (0 on left, 1 on right) regardless of UI language.
+           Math notation stays LTR per kaflon hard-constraint. -->
+      <div class="bg-white rounded-2xl py-2" dir="ltr">
+        <svg id="nl-axis" viewBox="0 0 320 80" class="w-full block touch-none" preserveAspectRatio="xMidYMid meet" style="cursor: crosshair; -webkit-tap-highlight-color: transparent;">
+          <!-- big invisible tap zone (≥44px tall on a 375px viewport) -->
+          <rect id="nl-tap-zone" x="0" y="0" width="320" height="80" fill="transparent"></rect>
+          <!-- axis line -->
+          <line x1="20" y1="50" x2="300" y2="50" stroke="#334155" stroke-width="3" stroke-linecap="round" pointer-events="none"></line>
+          <!-- ticks + labels (rendered by JS for clean repeat) -->
+          <g id="nl-ticks" pointer-events="none"></g>
+          <!-- markers for tapped + correct positions (rendered by JS after tap) -->
+          <g id="nl-markers" pointer-events="none"></g>
+        </svg>
+      </div>
+
+      <div id="nl-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
+
+      <button id="nl-next-btn" class="hidden w-full py-4 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl font-black text-base shadow-md active:scale-95 transition" data-i18n="numberline-try-again">לחצי → לשאלה הבאה</button>
+
+      <button id="nl-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
     </section>
 
     <!-- NUMPAD — floats below the answer; visible only in game/decimal-drill, number-mode, when toggle is on -->
@@ -300,7 +351,13 @@
         'place-value': 'Place value',
         'unit-conv': 'Unit conversions',
         'p1-1-name': 'Place value & unit conversions',
-        'back-to-menu': 'Menu'
+        'back-to-menu': 'Menu',
+        'tier-1': 'Tier 1',
+        'tier-2': 'Tier 2',
+        'tier-3': 'Tier 3',
+        'mul-dec-hint': '💡 Count the digits after the dot in BOTH numbers — the answer has the same total of digits after the dot.',
+        'numberline-prompt': 'Tap where {value} goes',
+        'numberline-try-again': 'Tap → for the next one'
       },
       he: {
         mode: 'מצב',
@@ -346,7 +403,13 @@
         'place-value': 'מבנה עשרוני',
         'unit-conv': 'המרות יחידות',
         'p1-1-name': 'מבנה עשרוני והמרות יחידות',
-        'back-to-menu': 'תפריט'
+        'back-to-menu': 'תפריט',
+        'tier-1': 'רמה 1',
+        'tier-2': 'רמה 2',
+        'tier-3': 'רמה 3',
+        'mul-dec-hint': '💡 ספרו את הספרות אחרי הנקודה בשני המספרים — לתשובה אותו מספר של ספרות אחרי הנקודה.',
+        'numberline-prompt': 'לחצי איפה {value}',
+        'numberline-try-again': 'לחצי → לשאלה הבאה'
       }
     };
 
@@ -401,8 +464,9 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill'].forEach(s => {
-        document.getElementById(s).classList.toggle('hidden', s !== id);
+      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill'].forEach(s => {
+        const el = document.getElementById(s);
+        if (el) el.classList.toggle('hidden', s !== id);
       });
       if (typeof updateNumpadVisibility === 'function') updateNumpadVisibility();
     }
@@ -460,11 +524,11 @@
       { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract', enter: enterAddSubDecimals },
       { key: 'mul-div-pow10', he: 'כפל וחילוק ב-10, 100, 1000', en: '× and ÷ by 10, 100, 1000', enter: enterMulDivPow10 },
       { key: 'fractions',   he: 'שברים עשרוניים (3/10 ↔ 0.3)', en: 'Decimal fractions', enter: enterDecimalFractions },
-      { key: 'numberline',  he: 'מיקום על ישר המספרים', en: 'Number line' },
-      { key: 'measure',     he: 'מידות (מטר, ס״מ, מ״מ)', en: 'Measurements (m, cm, mm)' },
-      { key: 'percent',     he: 'אחוזים', en: 'Percentages' },
-      { key: 'percent-dec', he: 'אחוזים ממספרים עשרוניים', en: 'Percentages of decimals' },
-      { key: 'mul-dec',     he: 'כפל מספרים עשרוניים', en: 'Decimal × decimal' }
+      { key: 'numberline',  he: 'מיקום על ישר המספרים', en: 'Number line', enter: enterNumberLine },
+      { key: 'measure',     he: 'מידות (מטר, ס״מ, מ״מ)', en: 'Measurements (m, cm, mm)', enter: enterMeasurements },
+      { key: 'percent',     he: 'אחוזים', en: 'Percentages', enter: enterPercentWhole },
+      { key: 'percent-dec', he: 'אחוזים ממספרים עשרוניים', en: 'Percentages of decimals', enter: enterPercentDecimal },
+      { key: 'mul-dec',     he: 'כפל מספרים עשרוניים', en: 'Decimal × decimal', enter: enterMulDec }
     ];
 
     function renderDecimalsMenu() {
@@ -1082,6 +1146,137 @@
       };
     }
 
+    // Generator 7: measurements (m ↔ cm ↔ mm). All 6 directions.
+    // Reuses the ×10/÷10 mechanic from P1.4 with real-world unit framing.
+    function genMeasurements() {
+      // 6 conversions, labelled with display strings per lang
+      const pairs = [
+        { from: 'm',  to: 'cm', factor: 100 },   // 1.5 m  = 150 cm
+        { from: 'cm', to: 'm',  factor: 1/100 },
+        { from: 'm',  to: 'mm', factor: 1000 },
+        { from: 'mm', to: 'm',  factor: 1/1000 },
+        { from: 'cm', to: 'mm', factor: 10 },
+        { from: 'mm', to: 'cm', factor: 1/10 }
+      ];
+      const p = pairs[rand(0, pairs.length - 1)];
+      // pick a from-value that yields a clean answer (≤3 dp, no trailing-zero pain)
+      let fromValue;
+      if (p.factor >= 1) {
+        // shrinking from larger unit: pick a 1–2dp decimal
+        const dp = rand(1, 2);
+        const div = Math.pow(10, dp);
+        fromValue = rand(1, 99) / div;
+      } else {
+        // expanding from smaller unit: pick an integer
+        fromValue = rand(1, 999);
+      }
+      const answer = Math.round(fromValue * p.factor * 1000) / 1000;
+      const labels = {
+        en: { m: 'm', cm: 'cm', mm: 'mm' },
+        he: { m: 'מ׳',  cm: 'ס״מ', mm: 'מ״מ' }
+      };
+      const fromLabel = labels[lang][p.from];
+      const toLabel = labels[lang][p.to];
+      // canonicalize fromValue display (drop trailing zeros)
+      const fromStr = parseFloat(fromValue.toString()).toString();
+      return {
+        questionText: `${fromStr} ${fromLabel} = ? ${toLabel}`,
+        subQuestion: '',
+        answer,
+        kind: 'measurements'
+      };
+    }
+
+    // Generator 8: percentages of whole numbers (P3.1).
+    // Generator constraint: answer is always a whole number.
+    function genPercentWhole() {
+      // (percent, base-multiplier) pairs chosen so percent/100 * base is integer
+      const buckets = [
+        { p: 10,  bases: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300] },
+        { p: 20,  bases: [5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 150, 200] },
+        { p: 25,  bases: [4, 8, 12, 16, 20, 24, 28, 32, 40, 60, 80, 100, 120, 200] },
+        { p: 50,  bases: [2, 4, 6, 8, 10, 12, 20, 30, 40, 50, 60, 80, 100, 200] },
+        { p: 75,  bases: [4, 8, 12, 16, 20, 24, 28, 32, 40, 60, 80, 100, 120] },
+        { p: 100, bases: [1, 5, 10, 20, 50, 100, 200, 500] }
+      ];
+      const bucket = buckets[rand(0, buckets.length - 1)];
+      const base = bucket.bases[rand(0, bucket.bases.length - 1)];
+      const answer = bucket.p * base / 100;
+      const questionText = lang === 'he'
+        ? `כמה זה ${bucket.p}% מ-${base}?`
+        : `${bucket.p}% of ${base} = ?`;
+      return {
+        questionText,
+        subQuestion: '',
+        answer,
+        kind: 'percent-whole'
+      };
+    }
+
+    // Generator 9: percentages of decimals (P3.2). Combines P3.1 + decimal arithmetic.
+    // Constraint: answer ≤ 2dp; values 1–100 with 1dp base.
+    function genPercentDecimal() {
+      // Pick percent ∈ {10, 25, 50} and a 1-dp base 1.0–10.0
+      const percents = [10, 25, 50];
+      const p = percents[rand(0, percents.length - 1)];
+      // For 1dp base: 10% of N.M = 0.NM (always ≤2dp)
+      //              25% of N.M needs N.M divisible by 4 for clean — relax to ≤2dp
+      //              50% of N.M = halve, ≤2dp safe when base is *.0 or *.2/.4/.6/.8 (even tenths)
+      let base;
+      if (p === 50) {
+        // even tenths only so halving stays ≤2dp
+        base = rand(10, 100) * 2 / 10; // 2.0 to 20.0 step 0.2
+      } else if (p === 25) {
+        // pick base ∈ {1.2, 1.6, 2.0, ..., 10.0} (every 0.4 step)
+        base = rand(3, 25) * 0.4;
+      } else {
+        // p === 10 — any 1dp base 1.0–10.0 works
+        base = rand(10, 100) / 10;
+      }
+      const baseStr = parseFloat(base.toFixed(1)).toString();
+      const answer = Math.round(p * base) / 100;
+      const questionText = lang === 'he'
+        ? `כמה זה ${p}% מ-${baseStr}?`
+        : `${p}% of ${baseStr} = ?`;
+      return {
+        questionText,
+        subQuestion: '',
+        answer,
+        kind: 'percent-decimal'
+      };
+    }
+
+    // Generator 10: decimal × decimal (P3.3 BOSS). Three tiers via dState.submode.
+    // The conceptual point: 0.3 × 0.2 = 0.06, NOT 0.6. Place-value compounding.
+    function genMulDec() {
+      const tier = dState.submode === 'mul-dec-t2' ? 2
+                 : dState.submode === 'mul-dec-t3' ? 3 : 1;
+      let aDp, bDp;
+      if (tier === 1) { aDp = 1; bDp = 1; }
+      else if (tier === 2) { aDp = 2; bDp = 1; }
+      else { aDp = 2; bDp = 2; }
+      const aInt = rand(1, 9);
+      const aLow = aDp === 2 ? rand(0, 9) : 0;
+      // a = (aInt * 10 + aLow) / 10^aDp  e.g. aDp=2, aInt=3, aLow=5  → 0.35
+      const aRaw = aInt * (aDp === 2 ? 10 : 1) + aLow;
+      const a = aRaw / Math.pow(10, aDp);
+      const bInt = rand(1, 9);
+      const bLow = bDp === 2 ? rand(0, 9) : 0;
+      const bRaw = bInt * (bDp === 2 ? 10 : 1) + bLow;
+      const b = bRaw / Math.pow(10, bDp);
+      const answer = Math.round(a * b * 10000) / 10000;
+      const aStr = a.toFixed(aDp);
+      const bStr = b.toFixed(bDp);
+      return {
+        questionText: `${aStr} × ${bStr} = ?`,
+        subQuestion: '',
+        answer,
+        aDp,
+        bDp,
+        kind: 'mul-dec'
+      };
+    }
+
     function nextDecimalQuestion() {
       let q;
       if (dState.activeModule === 'p1-2') {
@@ -1097,6 +1292,14 @@
           dState.answerKind = q.answerKind;
           applyDrillUI();
         }
+      } else if (dState.activeModule === 'p2-3') {
+        q = genMeasurements();
+      } else if (dState.activeModule === 'p3-1') {
+        q = genPercentWhole();
+      } else if (dState.activeModule === 'p3-2') {
+        q = genPercentDecimal();
+      } else if (dState.activeModule === 'p3-3') {
+        q = genMulDec();
       } else if (dState.submode === 'mixed-dec') {
         q = Math.random() < 0.5 ? genPlaceValue() : genUnitConv();
       } else if (dState.submode === 'unit-conv') {
@@ -1158,8 +1361,34 @@
       document.getElementById('d-fraction-row').classList.toggle('hidden', dState.answerKind !== 'fraction');
       // show sub-mode toggle only for modules that have sub-modes (P1.1)
       document.getElementById('d-submode-row').classList.toggle('hidden', dState.activeModule !== 'p1-1');
+      // P3.3 BOSS tier toggle — only for mul-dec
+      const isMulDec = dState.activeModule === 'p3-3';
+      document.getElementById('d-mul-dec-tier-row').classList.toggle('hidden', !isMulDec);
+      // Hint stays hidden until first wrong (or until module is re-entered, which resets dState.mulDecHintShown)
+      const showHint = isMulDec && dState.mulDecHintShown === true;
+      document.getElementById('d-mul-dec-hint').classList.toggle('hidden', !showHint);
+      if (isMulDec) renderMulDecTierActive();
       if (typeof updateNumpadVisibility === 'function') updateNumpadVisibility();
     }
+
+    function renderMulDecTierActive() {
+      document.querySelectorAll('.mul-dec-tier-btn').forEach(b => {
+        const isActive = b.dataset.mulDecTier === dState.submode;
+        b.classList.toggle('bg-indigo-600', isActive);
+        b.classList.toggle('text-white', isActive);
+        b.classList.toggle('shadow-md', isActive);
+        b.classList.toggle('bg-indigo-50', !isActive);
+      });
+    }
+
+    // Wire up the tier-row buttons (P3.3)
+    document.querySelectorAll('.mul-dec-tier-btn').forEach(b =>
+      b.addEventListener('click', () => {
+        dState.submode = b.dataset.mulDecTier;
+        renderMulDecTierActive();
+        nextDecimalQuestion();
+      })
+    );
 
     function resetDrillScores() {
       dState.score = 0;
@@ -1229,6 +1458,238 @@
       nextDecimalQuestion();
     }
 
+    function enterMeasurements() {
+      dState.activeModule = 'p2-3';
+      dState.answerKind = 'number';
+      setAnswerInputMode('decimal');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterPercentWhole() {
+      dState.activeModule = 'p3-1';
+      dState.answerKind = 'number';
+      setAnswerInputMode('numeric');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterPercentDecimal() {
+      dState.activeModule = 'p3-2';
+      dState.answerKind = 'number';
+      setAnswerInputMode('decimal');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterMulDec() {
+      dState.activeModule = 'p3-3';
+      dState.answerKind = 'number';
+      setAnswerInputMode('decimal');
+      // Default to Tier 1 (1dp × 1dp) on every entry — Ayala can ramp via the tier row.
+      dState.submode = 'mul-dec-t1';
+      // Hint hasn't been triggered yet this session.
+      dState.mulDecHintShown = false;
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    // ---------- P2.2: number-line drill (custom UI, tap-on-axis) ----------
+    // SVG coords: 0..1 maps to x ∈ [20, 300]. The axis is ALWAYS LTR per
+    // kaflon hard-constraint (math notation stays LTR even in Hebrew).
+    const NL_AXIS_X0 = 20;
+    const NL_AXIS_X1 = 300;
+    const NL_AXIS_Y = 50;
+    const NL_TOLERANCE = 0.05; // half-tick-width (tick spacing = 0.1)
+
+    const nlState = {
+      score: 0,
+      streak: 0,
+      best: 0,
+      current: null,
+      locked: false  // true while feedback is showing; ignores stray taps
+    };
+
+    function nlBestKey() {
+      const p = getActiveProfile();
+      return p ? `kaflon.profiles.${p.id}.nl-best` : 'kaflon.nl-best';
+    }
+
+    function genNumberLine() {
+      // Pick target ∈ {0.1, 0.2, ..., 0.9}. Avoid 0 and 1.0 (trivial).
+      const tenths = rand(1, 9);
+      const target = tenths / 10;
+      return {
+        target,
+        targetStr: target.toFixed(1),
+        kind: 'numberline'
+      };
+    }
+
+    function renderNumberLineAxisStatic() {
+      // Draw 11 ticks (0.0, 0.1, ..., 1.0). Labels at 0 and 1 only — keeps the
+      // axis readable on a 375px viewport and forces the kid to estimate.
+      const ticks = document.getElementById('nl-ticks');
+      ticks.innerHTML = '';
+      for (let i = 0; i <= 10; i++) {
+        const x = NL_AXIS_X0 + (i / 10) * (NL_AXIS_X1 - NL_AXIS_X0);
+        const isEnd = i === 0 || i === 10;
+        const tickHeight = isEnd ? 14 : 8;
+        const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tick.setAttribute('x1', x);
+        tick.setAttribute('x2', x);
+        tick.setAttribute('y1', NL_AXIS_Y - tickHeight);
+        tick.setAttribute('y2', NL_AXIS_Y + tickHeight);
+        tick.setAttribute('stroke', isEnd ? '#334155' : '#94a3b8');
+        tick.setAttribute('stroke-width', isEnd ? 3 : 2);
+        tick.setAttribute('stroke-linecap', 'round');
+        ticks.appendChild(tick);
+        if (isEnd) {
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', x);
+          label.setAttribute('y', NL_AXIS_Y + 32);
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('font-size', '14');
+          label.setAttribute('font-weight', '800');
+          label.setAttribute('fill', '#334155');
+          label.textContent = i === 0 ? '0' : '1';
+          ticks.appendChild(label);
+        }
+      }
+    }
+
+    function nlValueToX(v) {
+      return NL_AXIS_X0 + Math.max(0, Math.min(1, v)) * (NL_AXIS_X1 - NL_AXIS_X0);
+    }
+
+    function nlEventToValue(evt) {
+      const svg = document.getElementById('nl-axis');
+      const rect = svg.getBoundingClientRect();
+      const clientX = (evt.touches && evt.touches[0] ? evt.touches[0].clientX : evt.clientX);
+      // map screen-x to viewBox-x
+      const viewBoxX = ((clientX - rect.left) / rect.width) * 320;
+      const v = (viewBoxX - NL_AXIS_X0) / (NL_AXIS_X1 - NL_AXIS_X0);
+      return Math.max(0, Math.min(1, v));
+    }
+
+    function nlClearMarkers() {
+      document.getElementById('nl-markers').innerHTML = '';
+    }
+
+    function nlDrawMarker(x, color, label) {
+      const markers = document.getElementById('nl-markers');
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', NL_AXIS_Y);
+      circle.setAttribute('r', 9);
+      circle.setAttribute('fill', color);
+      circle.setAttribute('stroke', 'white');
+      circle.setAttribute('stroke-width', 3);
+      markers.appendChild(circle);
+      if (label != null) {
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', x);
+        txt.setAttribute('y', NL_AXIS_Y - 16);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '13');
+        txt.setAttribute('font-weight', '800');
+        txt.setAttribute('fill', color);
+        txt.textContent = label;
+        markers.appendChild(txt);
+      }
+    }
+
+    function nextNumberLineQuestion() {
+      const q = genNumberLine();
+      nlState.current = q;
+      nlState.locked = false;
+      const promptTpl = i18n[lang]['numberline-prompt'] || 'Tap where {value} goes';
+      document.getElementById('nl-prompt').textContent = promptTpl.replace('{value}', '');
+      document.getElementById('nl-target').textContent = q.targetStr;
+      document.getElementById('nl-feedback').textContent = '';
+      document.getElementById('nl-feedback').className = 'text-center font-bold text-lg min-h-[28px]';
+      document.getElementById('nl-next-btn').classList.add('hidden');
+      nlClearMarkers();
+    }
+
+    function processNumberLineTap(evt) {
+      if (nlState.locked || !nlState.current) return;
+      nlState.locked = true;
+      evt.preventDefault();
+      const tapped = nlEventToValue(evt);
+      const target = nlState.current.target;
+      const correct = Math.abs(tapped - target) < NL_TOLERANCE;
+      const fb = document.getElementById('nl-feedback');
+      const tappedX = nlValueToX(tapped);
+      const targetX = nlValueToX(target);
+      if (correct) {
+        playCorrect();
+        nlState.score++;
+        nlState.streak++;
+        if (nlState.streak > nlState.best) {
+          nlState.best = nlState.streak;
+          localStorage.setItem(nlBestKey(), nlState.best);
+        }
+        document.getElementById('nl-score').textContent = nlState.score;
+        document.getElementById('nl-streak').textContent = nlState.streak;
+        document.getElementById('nl-streak-emoji').textContent = streakEmoji(nlState.streak);
+        nlDrawMarker(targetX, '#10b981', nlState.current.targetStr);
+        fb.textContent = i18n[lang].correct;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-green-600';
+        setTimeout(nextNumberLineQuestion, 800);
+      } else {
+        playWrong();
+        nlState.streak = 0;
+        document.getElementById('nl-streak').textContent = '0';
+        document.getElementById('nl-streak-emoji').textContent = '🔥';
+        // Draw both markers + a thin connector showing the kid the gap
+        const connector = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        connector.setAttribute('x1', tappedX);
+        connector.setAttribute('x2', targetX);
+        connector.setAttribute('y1', NL_AXIS_Y);
+        connector.setAttribute('y2', NL_AXIS_Y);
+        connector.setAttribute('stroke', '#fbbf24');
+        connector.setAttribute('stroke-width', 3);
+        connector.setAttribute('stroke-dasharray', '4 4');
+        document.getElementById('nl-markers').appendChild(connector);
+        nlDrawMarker(tappedX, '#ef4444', null);          // red = where kid tapped
+        nlDrawMarker(targetX, '#10b981', nlState.current.targetStr); // green = correct
+        fb.textContent = `${i18n[lang].wrong} ${nlState.current.targetStr}`;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
+        document.getElementById('nl-next-btn').classList.remove('hidden');
+      }
+    }
+
+    function enterNumberLine() {
+      nlState.score = 0;
+      nlState.streak = 0;
+      nlState.best = parseInt(localStorage.getItem(nlBestKey()) || '0', 10);
+      document.getElementById('nl-score').textContent = '0';
+      document.getElementById('nl-streak').textContent = '0';
+      document.getElementById('nl-streak-emoji').textContent = '🔥';
+      renderNumberLineAxisStatic();
+      nextNumberLineQuestion();
+      showScreen('numberline-drill');
+    }
+
+    // Wire up the SVG tap-zone — both pointer (desktop) and touch (mobile)
+    (function wireNumberLineTaps() {
+      const svg = document.getElementById('nl-axis');
+      if (!svg) return;
+      // pointerdown covers both touch and mouse on modern browsers
+      svg.addEventListener('pointerdown', processNumberLineTap);
+      document.getElementById('nl-next-btn').addEventListener('click', nextNumberLineQuestion);
+      document.getElementById('nl-back-btn').addEventListener('click', () => showScreen('decimals-menu'));
+    })();
+
     function processDecimalOutcome(isCorrect) {
       const qEl = document.getElementById('d-question');
       const fb = document.getElementById('d-feedback');
@@ -1265,6 +1726,13 @@
           : dState.current.answer;
         fb.textContent = `${i18n[lang].wrong} ${expected}`;
         fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
+        // P3.3 BOSS: first wrong reveals the place-value rule
+        if (dState.activeModule === 'p3-3' && !dState.mulDecHintShown) {
+          dState.mulDecHintShown = true;
+          const hint = document.getElementById('d-mul-dec-hint');
+          hint.textContent = i18n[lang]['mul-dec-hint'];
+          hint.classList.remove('hidden');
+        }
         setTimeout(() => {
           qEl.classList.remove('flash-wrong');
           nextDecimalQuestion();
@@ -1333,11 +1801,18 @@
       gen: {
         placeValue: genPlaceValue,
         unitConv: genUnitConv,
-        compare: genCompare
+        compare: genCompare,
+        measurements: genMeasurements,
+        percentWhole: genPercentWhole,
+        percentDecimal: genPercentDecimal,
+        mulDec: genMulDec,
+        numberLine: genNumberLine
       },
       rand,
       PLACES,
-      DECIMAL_MODULES
+      DECIMAL_MODULES,
+      // P2.2 numberline UI constants (tests assert on the tolerance contract)
+      NL_TOLERANCE
     };
 
     // ---------- boot ----------

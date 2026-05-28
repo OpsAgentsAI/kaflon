@@ -203,6 +203,111 @@
         assert(cmp && typeof cmp.enter === 'function', 'compare missing enter()');
       });
 
+      test('DECIMAL_MODULES all entries have enter() functions (v0.5+v0.6 sprint)', () => {
+        // After the v0.5/v0.6 Ayala sprint, every curriculum entry should be
+        // a live drill — no more "coming soon" stubs in the menu.
+        const inactive = K.DECIMAL_MODULES.filter(m => typeof m.enter !== 'function');
+        assert(inactive.length === 0, 'inactive modules: ' + inactive.map(m => m.key).join(','));
+      });
+
+      // ------ genMeasurements (P2.3) ------
+      test('genMeasurements produces a from-unit, to-unit question with a numeric answer', () => {
+        for (let i = 0; i < 100; i++) {
+          const q = K.gen.measurements();
+          assert(q.kind === 'measurements', 'wrong kind: ' + q.kind);
+          assert(typeof q.answer === 'number' && isFinite(q.answer) && q.answer > 0,
+                 'bad answer: ' + q.answer);
+          assert(/= \? /.test(q.questionText), 'malformed prompt: ' + q.questionText);
+        }
+      });
+
+      // ------ genPercentWhole (P3.1) ------
+      test('genPercentWhole answer is ALWAYS a whole number', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.percentWhole();
+          assert(q.kind === 'percent-whole', 'wrong kind: ' + q.kind);
+          assert(Number.isInteger(q.answer),
+                 'answer is not integer: ' + q.answer + ' from: ' + q.questionText);
+        }
+      });
+
+      test('genPercentWhole uses the {10, 20, 25, 50, 75, 100} percent bucket', () => {
+        const seen = new Set();
+        for (let i = 0; i < 500; i++) {
+          const q = K.gen.percentWhole();
+          const m = q.questionText.match(/(\d+)%/);
+          if (m) seen.add(parseInt(m[1], 10));
+        }
+        const allowed = new Set([10, 20, 25, 50, 75, 100]);
+        for (const p of seen) {
+          assert(allowed.has(p), 'unexpected percent value: ' + p);
+        }
+        // expect at least 5 of the 6 over 500 samples
+        assert(seen.size >= 5, 'too few percent values seen: ' + [...seen]);
+      });
+
+      // ------ genPercentDecimal (P3.2) ------
+      test('genPercentDecimal answer is ≤ 2dp', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.percentDecimal();
+          assert(q.kind === 'percent-decimal', 'wrong kind: ' + q.kind);
+          // 2dp tolerance: answer * 100 must be an integer (within float noise)
+          const scaled = Math.round(q.answer * 100);
+          assert(Math.abs(scaled - q.answer * 100) < 1e-9,
+                 'answer not ≤2dp: ' + q.answer);
+        }
+      });
+
+      // ------ genMulDec (P3.3) ------
+      test('genMulDec answer equals a × b within float tolerance', () => {
+        // dState.submode defaults to "place-value" at module load, so this
+        // call yields tier-1 (1dp × 1dp). Cover the contract: answer must
+        // match the product of the operands displayed in questionText.
+        for (let i = 0; i < 100; i++) {
+          const q = K.gen.mulDec();
+          assert(q.kind === 'mul-dec', 'wrong kind: ' + q.kind);
+          const m = q.questionText.match(/^(\d+\.\d+) × (\d+\.\d+) = \?$/);
+          assert(m, 'malformed prompt: ' + q.questionText);
+          const a = parseFloat(m[1]);
+          const b = parseFloat(m[2]);
+          assert(Math.abs(q.answer - a * b) < 0.0001,
+                 `answer mismatch: ${q.answer} vs ${a}*${b}=${a*b}`);
+        }
+      });
+
+      test('genMulDec total decimal places of answer ≤ aDp + bDp (place-value rule)', () => {
+        // The whole point of P3.3 BOSS: kids must learn that 0.3 × 0.2 = 0.06,
+        // not 0.6. The total digits after the dot in the answer ≤ aDp + bDp.
+        for (let i = 0; i < 100; i++) {
+          const q = K.gen.mulDec();
+          const ansStr = q.answer.toString();
+          const dotIdx = ansStr.indexOf('.');
+          const ansDp = dotIdx === -1 ? 0 : ansStr.length - dotIdx - 1;
+          assert(ansDp <= q.aDp + q.bDp,
+                 `place-value rule violated: ${ansStr} has ${ansDp} dp; aDp+bDp=${q.aDp+q.bDp}`);
+        }
+      });
+
+      // ------ genNumberLine (P2.2) ------
+      test('genNumberLine target is a tenth in (0, 1)', () => {
+        for (let i = 0; i < 100; i++) {
+          const q = K.gen.numberLine();
+          assert(q.kind === 'numberline', 'wrong kind: ' + q.kind);
+          assert(q.target > 0 && q.target < 1, 'out of range: ' + q.target);
+          // q.target should be a clean tenth (0.1, 0.2, ..., 0.9)
+          const tenth = Math.round(q.target * 10);
+          assert(Math.abs(q.target - tenth / 10) < 1e-9, 'not a clean tenth: ' + q.target);
+          assert(q.targetStr === q.target.toFixed(1), 'targetStr/target mismatch');
+        }
+      });
+
+      test('NL_TOLERANCE matches half-tick-width on a 10-tick axis', () => {
+        // Tick spacing on 0..1 axis with 10 ticks = 0.1, so half-tick = 0.05.
+        // The card AC requires "tap-target tolerance ≥½× tick width".
+        assert(Math.abs(K.NL_TOLERANCE - 0.05) < 1e-9,
+               'tolerance wrong: ' + K.NL_TOLERANCE);
+      });
+
       finish();
     }
 
