@@ -31,17 +31,30 @@
 
   <div id="app" class="w-full max-w-md">
 
-    <header class="flex items-center justify-between mb-6">
+    <header class="flex items-center justify-between mb-6 gap-3">
       <h1 class="text-4xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
         Kaflon
       </h1>
-      <button id="lang-toggle" class="px-4 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition">
-        עברית
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="profile-chip" class="hidden px-3 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition flex items-center gap-1">
+          <span id="profile-chip-emoji">👤</span>
+          <span id="profile-chip-name">—</span>
+        </button>
+        <button id="lang-toggle" class="px-4 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition">
+          עברית
+        </button>
+      </div>
     </header>
 
-    <!-- SETTINGS -->
-    <section id="settings" class="bg-white rounded-3xl shadow-xl p-6 space-y-6">
+    <!-- PROFILE PICKER -->
+    <section id="profile-picker" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-6">
+      <h2 class="text-2xl font-black text-center" data-i18n="who-plays">Who's playing?</h2>
+      <div id="profile-list" class="space-y-3"></div>
+      <button id="add-profile-btn" class="w-full py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-lg active:scale-95 transition" data-i18n="add-kid">+ Add kid</button>
+    </section>
+
+    <!-- SETTINGS (multiplication/division track — Moshe default) -->
+    <section id="settings" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-6">
 
       <div>
         <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="mode">Mode</label>
@@ -68,6 +81,28 @@
       <button id="start-btn" class="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl shadow-lg active:scale-95 hover:shadow-xl transition" data-i18n="start">
         Start! 🚀
       </button>
+    </section>
+
+    <!-- AYALA HOME (decimals track stub menu) -->
+    <section id="ayala-home" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div>
+        <h2 class="text-2xl font-black" data-i18n="decimals-title">Decimals — 5th grade</h2>
+        <p class="text-sm text-slate-500 mt-1" data-i18n="decimals-subtitle">Pick a module to practice</p>
+      </div>
+      <div id="ayala-modules" class="space-y-3">
+        <button class="ayala-module-btn w-full text-start px-4 py-4 rounded-2xl bg-pink-50 hover:bg-pink-100 font-bold active:scale-95 transition opacity-60 cursor-not-allowed" disabled data-mod="place-value">
+          <div class="text-base">📍 <span data-i18n="mod-place-value">Place value (3 dp)</span></div>
+          <div class="text-xs text-slate-500 mt-1" data-i18n="coming-soon">Coming soon</div>
+        </button>
+        <button class="ayala-module-btn w-full text-start px-4 py-4 rounded-2xl bg-pink-50 hover:bg-pink-100 font-bold active:scale-95 transition opacity-60 cursor-not-allowed" disabled data-mod="compare">
+          <div class="text-base">⚖️ <span data-i18n="mod-compare">Compare decimals (&gt;, &lt;, =)</span></div>
+          <div class="text-xs text-slate-500 mt-1" data-i18n="coming-soon">Coming soon</div>
+        </button>
+        <button class="ayala-module-btn w-full text-start px-4 py-4 rounded-2xl bg-pink-50 hover:bg-pink-100 font-bold active:scale-95 transition opacity-60 cursor-not-allowed" disabled data-mod="convert">
+          <div class="text-base">🔄 <span data-i18n="mod-convert">Convert tenths / hundredths</span></div>
+          <div class="text-xs text-slate-500 mt-1" data-i18n="coming-soon">Coming soon</div>
+        </button>
+      </div>
     </section>
 
     <!-- GAME -->
@@ -141,7 +176,18 @@
         wrong: 'Almost! The answer is',
         great: 'Great streak!',
         amazing: 'Amazing!',
-        fire: 'On fire!'
+        fire: 'On fire!',
+        'who-plays': "Who's playing?",
+        'add-kid': '+ Add kid',
+        'decimals-title': 'Decimals — 5th grade',
+        'decimals-subtitle': 'Pick a module to practice',
+        'mod-place-value': 'Place value (3 dp)',
+        'mod-compare': 'Compare decimals (>, <, =)',
+        'mod-convert': 'Convert tenths / hundredths',
+        'coming-soon': 'Coming soon',
+        'switch-kid': 'Switch kid',
+        'kid-name-prompt': "What's the kid's name?",
+        'track-prompt': 'Track: 1 = ×÷ (3rd grade), 2 = decimals (5th grade)'
       },
       he: {
         mode: 'מצב',
@@ -159,7 +205,18 @@
         wrong: 'כמעט! התשובה היא',
         great: 'רצף יפה!',
         amazing: 'מדהים!',
-        fire: 'בוערים!'
+        fire: 'בוערים!',
+        'who-plays': 'מי משחק?',
+        'add-kid': '+ הוסף ילד',
+        'decimals-title': 'שברים עשרוניים — כיתה ה׳',
+        'decimals-subtitle': 'בחרי מודול לתרגול',
+        'mod-place-value': 'ערך מקומי (3 ספרות)',
+        'mod-compare': 'השוואת עשרוניים (>, <, =)',
+        'mod-convert': 'המרת עשיריות / מאיות',
+        'coming-soon': 'בקרוב',
+        'switch-kid': 'החלפת ילד',
+        'kid-name-prompt': 'איך קוראים לילד?',
+        'track-prompt': 'מסלול: 1 = כפל וחילוק (כיתה ג׳), 2 = שברים עשרוניים (כיתה ה׳)'
       }
     };
 
@@ -181,6 +238,119 @@
       applyLang();
     });
 
+    // ---------- profiles ----------
+    const PROFILES_KEY = 'kaflon.profiles';
+    const ACTIVE_KEY = 'kaflon.activeProfile';
+    const DEFAULT_PROFILES = [
+      { id: 'moshe', name: 'Moshe', nameHe: 'משה', emoji: '🧒', track: 'multdiv' },
+      { id: 'ayala', name: 'Ayala', nameHe: 'איילה', emoji: '👧', track: 'decimals' }
+    ];
+
+    function loadProfiles() {
+      try {
+        const raw = localStorage.getItem(PROFILES_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) { /* fall through to seed */ }
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(DEFAULT_PROFILES));
+      return DEFAULT_PROFILES;
+    }
+
+    function saveProfiles(list) {
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(list));
+    }
+
+    function getActiveProfile() {
+      const id = localStorage.getItem(ACTIVE_KEY);
+      if (!id) return null;
+      return loadProfiles().find(p => p.id === id) || null;
+    }
+
+    function setActiveProfile(id) {
+      localStorage.setItem(ACTIVE_KEY, id);
+    }
+
+    // Migrate legacy global best-streak → Moshe's profile (one-time).
+    function migrateLegacyBest() {
+      const legacy = localStorage.getItem('kaflon-best');
+      if (!legacy) return;
+      const key = 'kaflon.profiles.moshe.bestStreak';
+      if (!localStorage.getItem(key)) localStorage.setItem(key, legacy);
+      localStorage.removeItem('kaflon-best');
+    }
+    migrateLegacyBest();
+
+    function profileBestKey(id) { return `kaflon.profiles.${id}.bestStreak`; }
+    function getBest(id) { return parseInt(localStorage.getItem(profileBestKey(id)) || '0', 10); }
+    function setBest(id, n) { localStorage.setItem(profileBestKey(id), String(n)); }
+
+    function profileLabel(p) {
+      const name = lang === 'he' ? (p.nameHe || p.name) : p.name;
+      return `${p.emoji || '👤'} ${name}`;
+    }
+
+    function renderProfilePicker() {
+      const list = document.getElementById('profile-list');
+      list.innerHTML = '';
+      loadProfiles().forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-lg active:scale-95 transition flex items-center justify-center gap-2';
+        btn.textContent = profileLabel(p);
+        btn.addEventListener('click', () => {
+          setActiveProfile(p.id);
+          showHomeForActive();
+        });
+        list.appendChild(btn);
+      });
+    }
+
+    function showProfilePicker() {
+      renderProfilePicker();
+      ['settings', 'ayala-home', 'game'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      document.getElementById('profile-picker').classList.remove('hidden');
+      document.getElementById('profile-chip').classList.add('hidden');
+    }
+
+    function showHomeForActive() {
+      const p = getActiveProfile();
+      if (!p) { showProfilePicker(); return; }
+      // Refresh chip
+      const chip = document.getElementById('profile-chip');
+      document.getElementById('profile-chip-emoji').textContent = p.emoji || '👤';
+      document.getElementById('profile-chip-name').textContent = lang === 'he' ? (p.nameHe || p.name) : p.name;
+      chip.classList.remove('hidden');
+
+      // Reset state.best for the active profile
+      state.best = getBest(p.id);
+
+      document.getElementById('profile-picker').classList.add('hidden');
+      document.getElementById('game').classList.add('hidden');
+      if (p.track === 'decimals') {
+        document.getElementById('settings').classList.add('hidden');
+        document.getElementById('ayala-home').classList.remove('hidden');
+      } else {
+        document.getElementById('ayala-home').classList.add('hidden');
+        document.getElementById('settings').classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('profile-chip').addEventListener('click', showProfilePicker);
+
+    document.getElementById('add-profile-btn').addEventListener('click', () => {
+      const name = (prompt(i18n[lang]['kid-name-prompt']) || '').trim();
+      if (!name) return;
+      const trackPick = (prompt(i18n[lang]['track-prompt'], '1') || '1').trim();
+      const track = trackPick === '2' ? 'decimals' : 'multdiv';
+      const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `kid-${Date.now()}`;
+      const list = loadProfiles();
+      if (list.find(p => p.id === id)) {
+        alert(`"${name}" already exists.`);
+        return;
+      }
+      list.push({ id, name, nameHe: name, emoji: '🙂', track });
+      saveProfiles(list);
+      renderProfilePicker();
+    });
+
     // ---------- state ----------
     const state = {
       mode: 'multiply',
@@ -188,7 +358,7 @@
       table: 5,
       score: 0,
       streak: 0,
-      best: parseInt(localStorage.getItem('kaflon-best') || '0', 10),
+      best: 0,
       current: null
     };
 
@@ -291,7 +461,12 @@
 
     document.getElementById('back-btn').addEventListener('click', () => {
       document.getElementById('game').classList.add('hidden');
-      document.getElementById('settings').classList.remove('hidden');
+      const p = getActiveProfile();
+      if (p && p.track === 'decimals') {
+        document.getElementById('ayala-home').classList.remove('hidden');
+      } else {
+        document.getElementById('settings').classList.remove('hidden');
+      }
     });
 
     // ---------- submit ----------
@@ -313,7 +488,8 @@
         state.streak++;
         if (state.streak > state.best) {
           state.best = state.streak;
-          localStorage.setItem('kaflon-best', state.best);
+          const p = getActiveProfile();
+          if (p) setBest(p.id, state.best);
         }
         document.getElementById('score').textContent = state.score;
         document.getElementById('streak').textContent = state.streak;
@@ -350,6 +526,11 @@
 
     // ---------- boot ----------
     applyLang();
+    if (getActiveProfile()) {
+      showHomeForActive();
+    } else {
+      showProfilePicker();
+    }
   </script>
 </body>
 </html>
