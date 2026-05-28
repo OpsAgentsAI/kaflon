@@ -166,7 +166,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-2">
+      <div id="d-submode-row" class="grid grid-cols-3 gap-2">
         <button data-decimal-mode="place-value" class="decimal-mode-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="place-value-mode">מקומות</button>
         <button data-decimal-mode="unit-conv" class="decimal-mode-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="unit-conv-mode">המרות</button>
         <button data-decimal-mode="mixed-dec" class="decimal-mode-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="decimal-mixed">מעורב</button>
@@ -177,21 +177,27 @@
         <div id="d-subquestion" class="text-xl font-bold text-slate-700"></div>
       </div>
 
-      <input
-        id="d-answer"
-        type="number"
-        inputmode="numeric"
-        autocomplete="off"
-        class="answer-input w-full text-5xl text-center py-5 border-4 border-indigo-200 rounded-2xl focus:border-indigo-500 outline-none font-black"
-        placeholder="?"
-      >
-
-      <div class="grid grid-cols-4 gap-2">
-        <button id="d-submit-btn" class="col-span-3 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">
+      <div id="d-number-row" class="space-y-3">
+        <input
+          id="d-answer"
+          type="number"
+          inputmode="numeric"
+          autocomplete="off"
+          class="answer-input w-full text-5xl text-center py-5 border-4 border-indigo-200 rounded-2xl focus:border-indigo-500 outline-none font-black"
+          placeholder="?"
+        >
+        <button id="d-submit-btn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">
           בדיקה ✓
         </button>
-        <button id="d-back-btn" class="py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
       </div>
+
+      <div id="d-choice-row" class="hidden grid grid-cols-3 gap-2">
+        <button data-choice="-1" class="d-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">&lt;</button>
+        <button data-choice="0" class="d-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">=</button>
+        <button data-choice="1" class="d-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">&gt;</button>
+      </div>
+
+      <button id="d-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
 
       <div id="d-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
@@ -411,7 +417,7 @@
     // Decimals curriculum (12 modules). `enter` set → active drill entry.
     const DECIMAL_MODULES = [
       { key: 'p1-1',        he: 'מבנה עשרוני והמרות יחידות', en: 'Place value & unit conversions', enter: enterDecimalDrill },
-      { key: 'compare',     he: 'השוואה (>, <, =)', en: 'Compare decimals' },
+      { key: 'compare',     he: 'השוואה (>, <, =)', en: 'Compare decimals', enter: enterCompareDecimals },
       { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract' },
       { key: 'mul-pow10',   he: 'כפל ב-10, 100, 1000', en: 'Multiply by 10, 100, 1000' },
       { key: 'div-pow10',   he: 'חילוק ב-10, 100, 1000', en: 'Divide by 10, 100, 1000' },
@@ -743,9 +749,13 @@
       if (e.key === 'Enter') submit();
     });
 
-    // ---------- decimal drill (Ayala P1.1) ----------
+    // ---------- decimal drill (Ayala P1.x) ----------
+    // activeModule selects which curriculum module is loaded.
+    // answerKind selects which input UI is shown ('number' | 'choice').
     const dState = {
+      activeModule: 'p1-1',
       submode: 'place-value',
+      answerKind: 'number',
       score: 0,
       streak: 0,
       best: 0,
@@ -800,9 +810,66 @@
       };
     }
 
+    // Generator 3: compare decimals. Two decimals, answer ∈ {-1, 0, 1}.
+    function genCompare() {
+      const styles = ['equal-different-form', 'leading-zero-trap', 'tiny-diff', 'large-diff'];
+      const style = styles[rand(0, 3)];
+      let aStr, bStr, aNum, bNum;
+
+      if (style === 'equal-different-form') {
+        // 0.4 vs 0.40 / 0.5 vs 0.500 — trap on trailing zeros
+        const baseNum = rand(1, 9) / 10;
+        aStr = baseNum.toString();
+        bStr = baseNum.toFixed(rand(2, 3));
+        aNum = baseNum;
+        bNum = baseNum;
+      } else if (style === 'leading-zero-trap') {
+        // 0.07 vs 0.7 — trap on positional value
+        const d = rand(1, 9);
+        aStr = `0.0${d}`;
+        bStr = `0.${d}`;
+        aNum = parseFloat(aStr);
+        bNum = parseFloat(bStr);
+      } else if (style === 'tiny-diff') {
+        // 0.3 vs 0.27 — same prefix different length
+        const aTen = rand(1, 8);
+        aStr = `0.${aTen}`;
+        bStr = `0.${aTen - 1}${rand(1, 9)}`;
+        aNum = parseFloat(aStr);
+        bNum = parseFloat(bStr);
+      } else { // large-diff
+        const aT = rand(2, 9);
+        const bH = rand(1, 9);
+        aStr = `0.${aT}`;
+        bStr = `0.0${bH}`;
+        aNum = parseFloat(aStr);
+        bNum = parseFloat(bStr);
+      }
+
+      // Randomize side order ~50% so the answer isn't biased
+      if (Math.random() < 0.5) {
+        [aStr, bStr] = [bStr, aStr];
+        [aNum, bNum] = [bNum, aNum];
+      }
+
+      let answer;
+      if (aNum < bNum) answer = -1;
+      else if (aNum > bNum) answer = 1;
+      else answer = 0;
+
+      return {
+        questionText: `${aStr} ☐ ${bStr}`,
+        subQuestion: '',
+        answer,
+        kind: 'compare'
+      };
+    }
+
     function nextDecimalQuestion() {
       let q;
-      if (dState.submode === 'mixed-dec') {
+      if (dState.activeModule === 'p1-2') {
+        q = genCompare();
+      } else if (dState.submode === 'mixed-dec') {
         q = Math.random() < 0.5 ? genPlaceValue() : genUnitConv();
       } else if (dState.submode === 'unit-conv') {
         q = genUnitConv();
@@ -817,8 +884,8 @@
       qEl.classList.add('pop');
       setTimeout(() => qEl.classList.remove('pop'), 300);
       const input = document.getElementById('d-answer');
-      input.value = '';
-      input.focus();
+      if (input) input.value = '';
+      if (dState.answerKind === 'number' && input) input.focus();
       document.getElementById('d-feedback').textContent = '';
     }
 
@@ -836,16 +903,40 @@
       b.addEventListener('click', () => selectDecimalMode(b))
     );
 
-    function enterDecimalDrill() {
+    function applyDrillUI() {
+      // toggle which input UI is showing
+      document.getElementById('d-number-row').classList.toggle('hidden', dState.answerKind !== 'number');
+      document.getElementById('d-choice-row').classList.toggle('hidden', dState.answerKind !== 'choice');
+      // show sub-mode toggle only for modules that have sub-modes (P1.1)
+      document.getElementById('d-submode-row').classList.toggle('hidden', dState.activeModule !== 'p1-1');
+    }
+
+    function resetDrillScores() {
       dState.score = 0;
       dState.streak = 0;
       dState.best = parseInt(localStorage.getItem(dBestKey()) || '0', 10);
       document.getElementById('d-score').textContent = '0';
       document.getElementById('d-streak').textContent = '0';
       document.getElementById('d-streak-emoji').textContent = '🔥';
+    }
+
+    function enterDecimalDrill() {
+      dState.activeModule = 'p1-1';
+      dState.answerKind = 'number';
+      resetDrillScores();
+      applyDrillUI();
       // default to place-value submode visually
       selectDecimalMode(document.querySelector('[data-decimal-mode="place-value"]'));
       showScreen('decimal-drill');
+    }
+
+    function enterCompareDecimals() {
+      dState.activeModule = 'p1-2';
+      dState.answerKind = 'choice';
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
     }
 
     function submitDecimal() {
@@ -894,6 +985,17 @@
     document.getElementById('d-submit-btn').addEventListener('click', submitDecimal);
     document.getElementById('d-answer').addEventListener('keydown', e => {
       if (e.key === 'Enter') submitDecimal();
+    });
+    document.querySelectorAll('.d-choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (dState.current == null) return;
+        const v = parseInt(btn.dataset.choice, 10);
+        // reuse the same correct/wrong path as submitDecimal by stashing the value
+        const fakeInput = { value: String(v) };
+        const realInput = document.getElementById('d-answer');
+        realInput.value = String(v);
+        submitDecimal();
+      });
     });
     document.getElementById('d-back-btn').addEventListener('click', () => {
       showScreen('decimals-menu');
