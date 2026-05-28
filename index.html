@@ -154,6 +154,48 @@
       <div id="feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
 
+    <!-- DECIMAL DRILL — Ayala P1.1 (place value + unit conversions) -->
+    <section id="decimal-drill" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+
+      <div class="flex justify-between text-base">
+        <div class="bg-indigo-50 rounded-full px-4 py-2">
+          <span data-i18n="score">ניקוד</span>: <span id="d-score" class="font-black text-indigo-600">0</span>
+        </div>
+        <div class="bg-orange-50 rounded-full px-4 py-2">
+          <span data-i18n="streak">רצף</span>: <span id="d-streak" class="font-black text-orange-600">0</span> <span id="d-streak-emoji">🔥</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button data-decimal-mode="place-value" class="decimal-mode-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="place-value-mode">מקומות</button>
+        <button data-decimal-mode="unit-conv" class="decimal-mode-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="unit-conv-mode">המרות</button>
+        <button data-decimal-mode="mixed-dec" class="decimal-mode-btn px-2 py-3 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="decimal-mixed">מעורב</button>
+      </div>
+
+      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl py-8 px-4 text-center select-none space-y-2">
+        <div id="d-question" class="math text-6xl sm:text-7xl font-black">0.273</div>
+        <div id="d-subquestion" class="text-xl font-bold text-slate-700"></div>
+      </div>
+
+      <input
+        id="d-answer"
+        type="number"
+        inputmode="numeric"
+        autocomplete="off"
+        class="answer-input w-full text-5xl text-center py-5 border-4 border-indigo-200 rounded-2xl focus:border-indigo-500 outline-none font-black"
+        placeholder="?"
+      >
+
+      <div class="grid grid-cols-4 gap-2">
+        <button id="d-submit-btn" class="col-span-3 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">
+          בדיקה ✓
+        </button>
+        <button id="d-back-btn" class="py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
+      </div>
+
+      <div id="d-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
+    </section>
+
     <footer class="text-center text-xs text-slate-500 mt-8 space-y-1">
       <p>
         <a href="https://github.com/OpsAgentsAI/kaflon" class="underline hover:text-indigo-600">GitHub</a>
@@ -204,7 +246,18 @@
         halves: 'Halves',
         sound: 'Sound',
         on: 'On',
-        off: 'Off'
+        off: 'Off',
+        'place-value-mode': 'Places',
+        'unit-conv-mode': 'Conversions',
+        'decimal-mixed': 'Mixed',
+        tenths: 'tenths',
+        hundredths: 'hundredths',
+        thousandths: 'thousandths',
+        'place-question': 'Which digit is in the {place} place?',
+        'place-value': 'Place value',
+        'unit-conv': 'Unit conversions',
+        'p1-1-name': 'Place value & unit conversions',
+        'back-to-menu': 'Menu'
       },
       he: {
         mode: 'מצב',
@@ -238,7 +291,18 @@
         halves: 'חצאים',
         sound: 'צלילים',
         on: 'פעיל',
-        off: 'כבוי'
+        off: 'כבוי',
+        'place-value-mode': 'מקומות',
+        'unit-conv-mode': 'המרות',
+        'decimal-mixed': 'מעורב',
+        tenths: 'עשיריות',
+        hundredths: 'מאיות',
+        thousandths: 'אלפיות',
+        'place-question': 'איזו ספרה במקום ה{place}?',
+        'place-value': 'מבנה עשרוני',
+        'unit-conv': 'המרות יחידות',
+        'p1-1-name': 'מבנה עשרוני והמרות יחידות',
+        'back-to-menu': 'תפריט'
       }
     };
 
@@ -293,7 +357,7 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game'].forEach(s => {
+      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill'].forEach(s => {
         document.getElementById(s).classList.toggle('hidden', s !== id);
       });
     }
@@ -344,10 +408,9 @@
       });
     }
 
-    // Decimals curriculum stub (12 modules — Ayala v0.4+ work)
+    // Decimals curriculum (12 modules). `enter` set → active drill entry.
     const DECIMAL_MODULES = [
-      { key: 'place-value', he: 'מבנה עשרוני (עד 3 ספרות)', en: 'Place value (3 decimal places)' },
-      { key: 'unit-conv',   he: 'המרות יחידות (עשיריות / מאיות / אלפיות)', en: 'Unit conversions' },
+      { key: 'p1-1',        he: 'מבנה עשרוני והמרות יחידות', en: 'Place value & unit conversions', enter: enterDecimalDrill },
       { key: 'compare',     he: 'השוואה (>, <, =)', en: 'Compare decimals' },
       { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract' },
       { key: 'mul-pow10',   he: 'כפל ב-10, 100, 1000', en: 'Multiply by 10, 100, 1000' },
@@ -364,14 +427,25 @@
       const list = document.getElementById('decimals-modules');
       list.innerHTML = '';
       DECIMAL_MODULES.forEach(m => {
-        const row = document.createElement('div');
-        row.className = 'w-full py-3 px-4 bg-slate-50 rounded-xl flex items-center justify-between text-base opacity-70';
+        const isActive = typeof m.enter === 'function';
+        const row = document.createElement(isActive ? 'button' : 'div');
+        if (isActive) {
+          row.className = 'w-full py-4 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
+          row.addEventListener('click', () => m.enter());
+        } else {
+          row.className = 'w-full py-3 px-4 bg-slate-50 rounded-xl flex items-center justify-between text-base opacity-70';
+        }
         const label = document.createElement('span');
         label.className = 'font-bold';
         label.textContent = m[lang] || m.he;
         const tag = document.createElement('span');
-        tag.className = 'text-xs px-2 py-1 bg-slate-200 rounded-full text-slate-600';
-        tag.textContent = i18n[lang]['coming-soon'];
+        if (isActive) {
+          tag.className = 'text-lg';
+          tag.textContent = '▸';
+        } else {
+          tag.className = 'text-xs px-2 py-1 bg-slate-200 rounded-full text-slate-600';
+          tag.textContent = i18n[lang]['coming-soon'];
+        }
         row.appendChild(label);
         row.appendChild(tag);
         list.appendChild(row);
@@ -667,6 +741,162 @@
     document.getElementById('submit-btn').addEventListener('click', submit);
     document.getElementById('answer').addEventListener('keydown', e => {
       if (e.key === 'Enter') submit();
+    });
+
+    // ---------- decimal drill (Ayala P1.1) ----------
+    const dState = {
+      submode: 'place-value',
+      score: 0,
+      streak: 0,
+      best: 0,
+      current: null
+    };
+
+    function dBestKey() {
+      return `kaflon.profiles.${activeProfileId}.decimal-best`;
+    }
+
+    const PLACES = [
+      { key: 'tenths', pos: 1 },       // index after the decimal point
+      { key: 'hundredths', pos: 2 },
+      { key: 'thousandths', pos: 3 }
+    ];
+
+    // Generator 1: name-the-place. Pick a 3dp number, ask which digit is at place X.
+    function genPlaceValue() {
+      const intPart = rand(0, 9);
+      const tenths = rand(0, 9);
+      const hundredths = rand(0, 9);
+      const thousandths = rand(0, 9);
+      const digits = [intPart, tenths, hundredths, thousandths];
+      // Pad so the kid sees the full 3-decimal form
+      const num = `${intPart}.${tenths}${hundredths}${thousandths}`;
+      const place = PLACES[rand(0, 2)];
+      const placeName = i18n[lang][place.key] || place.key;
+      const template = i18n[lang]['place-question'] || 'Which digit is in the {place} place?';
+      const subQuestion = template.replace('{place}', placeName);
+      return {
+        questionText: num,
+        subQuestion,
+        answer: digits[place.pos],
+        kind: 'place-value'
+      };
+    }
+
+    // Generator 2: unit conversion (tenths <-> hundredths <-> thousandths).
+    // Shape: "value = ?/denom" where value * denom = answer.
+    function genUnitConv() {
+      const denoms = [10, 100, 1000];
+      const denom = denoms[rand(0, 2)];
+      const answer = rand(1, denom - 1);
+      // Express as a clean decimal (no trailing zeros)
+      const valueNum = answer / denom;
+      const valueStr = valueNum.toString();
+      return {
+        questionText: `${valueStr} = ?/${denom}`,
+        subQuestion: '',
+        answer,
+        kind: 'unit-conv'
+      };
+    }
+
+    function nextDecimalQuestion() {
+      let q;
+      if (dState.submode === 'mixed-dec') {
+        q = Math.random() < 0.5 ? genPlaceValue() : genUnitConv();
+      } else if (dState.submode === 'unit-conv') {
+        q = genUnitConv();
+      } else {
+        q = genPlaceValue();
+      }
+      dState.current = q;
+      const qEl = document.getElementById('d-question');
+      const subEl = document.getElementById('d-subquestion');
+      qEl.textContent = q.questionText;
+      subEl.textContent = q.subQuestion;
+      qEl.classList.add('pop');
+      setTimeout(() => qEl.classList.remove('pop'), 300);
+      const input = document.getElementById('d-answer');
+      input.value = '';
+      input.focus();
+      document.getElementById('d-feedback').textContent = '';
+    }
+
+    function selectDecimalMode(el) {
+      document.querySelectorAll('.decimal-mode-btn').forEach(x => {
+        x.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+        x.classList.add('bg-indigo-50');
+      });
+      el.classList.remove('bg-indigo-50');
+      el.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+      dState.submode = el.dataset.decimalMode;
+      nextDecimalQuestion();
+    }
+    document.querySelectorAll('.decimal-mode-btn').forEach(b =>
+      b.addEventListener('click', () => selectDecimalMode(b))
+    );
+
+    function enterDecimalDrill() {
+      dState.score = 0;
+      dState.streak = 0;
+      dState.best = parseInt(localStorage.getItem(dBestKey()) || '0', 10);
+      document.getElementById('d-score').textContent = '0';
+      document.getElementById('d-streak').textContent = '0';
+      document.getElementById('d-streak-emoji').textContent = '🔥';
+      // default to place-value submode visually
+      selectDecimalMode(document.querySelector('[data-decimal-mode="place-value"]'));
+      showScreen('decimal-drill');
+    }
+
+    function submitDecimal() {
+      const v = parseInt(document.getElementById('d-answer').value, 10);
+      if (isNaN(v) || dState.current == null) return;
+      const qEl = document.getElementById('d-question');
+      const fb = document.getElementById('d-feedback');
+
+      if (v === dState.current.answer) {
+        playCorrect();
+        dState.score++;
+        dState.streak++;
+        if (dState.streak > dState.best) {
+          dState.best = dState.streak;
+          localStorage.setItem(dBestKey(), dState.best);
+        }
+        document.getElementById('d-score').textContent = dState.score;
+        document.getElementById('d-streak').textContent = dState.streak;
+        document.getElementById('d-streak-emoji').textContent = streakEmoji(dState.streak);
+        qEl.classList.add('flash-correct');
+        let msg = i18n[lang].correct;
+        if (dState.streak === 5) msg = i18n[lang].great + ' ' + i18n[lang].correct;
+        if (dState.streak === 10) msg = i18n[lang].fire + ' ' + i18n[lang].correct;
+        if (dState.streak === 20) msg = i18n[lang].amazing + ' ' + i18n[lang].correct;
+        fb.textContent = msg;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-green-600';
+        setTimeout(() => {
+          qEl.classList.remove('flash-correct');
+          nextDecimalQuestion();
+        }, 700);
+      } else {
+        playWrong();
+        dState.streak = 0;
+        document.getElementById('d-streak').textContent = '0';
+        document.getElementById('d-streak-emoji').textContent = '🔥';
+        qEl.classList.add('flash-wrong');
+        fb.textContent = `${i18n[lang].wrong} ${dState.current.answer}`;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
+        setTimeout(() => {
+          qEl.classList.remove('flash-wrong');
+          nextDecimalQuestion();
+        }, 1600);
+      }
+    }
+
+    document.getElementById('d-submit-btn').addEventListener('click', submitDecimal);
+    document.getElementById('d-answer').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitDecimal();
+    });
+    document.getElementById('d-back-btn').addEventListener('click', () => {
+      showScreen('decimals-menu');
     });
 
     // ---------- boot ----------
