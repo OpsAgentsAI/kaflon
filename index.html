@@ -205,6 +205,15 @@
         <button data-choice="1" class="d-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">&gt;</button>
       </div>
 
+      <div id="d-fraction-row" class="hidden space-y-3">
+        <div class="flex flex-col items-center gap-2 max-w-xs mx-auto">
+          <input id="d-numerator" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-32 text-4xl text-center py-3 border-4 border-indigo-200 rounded-2xl focus:border-indigo-500 outline-none font-black" placeholder="?">
+          <div class="h-1 w-32 bg-slate-800 rounded"></div>
+          <input id="d-denominator" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-32 text-4xl text-center py-3 border-4 border-indigo-200 rounded-2xl focus:border-indigo-500 outline-none font-black" placeholder="?">
+        </div>
+        <button id="d-fraction-submit-btn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
+      </div>
+
       <button id="d-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
 
       <div id="d-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
@@ -450,7 +459,7 @@
       { key: 'compare',     he: 'השוואה (>, <, =)', en: 'Compare decimals', enter: enterCompareDecimals },
       { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract', enter: enterAddSubDecimals },
       { key: 'mul-div-pow10', he: 'כפל וחילוק ב-10, 100, 1000', en: '× and ÷ by 10, 100, 1000', enter: enterMulDivPow10 },
-      { key: 'fractions',   he: 'שברים עשרוניים (3/10 ↔ 0.3)', en: 'Decimal fractions' },
+      { key: 'fractions',   he: 'שברים עשרוניים (3/10 ↔ 0.3)', en: 'Decimal fractions', enter: enterDecimalFractions },
       { key: 'numberline',  he: 'מיקום על ישר המספרים', en: 'Number line' },
       { key: 'measure',     he: 'מידות (מטר, ס״מ, מ״מ)', en: 'Measurements (m, cm, mm)' },
       { key: 'percent',     he: 'אחוזים', en: 'Percentages' },
@@ -1037,6 +1046,35 @@
       };
     }
 
+    // Generator 6: decimal fractions. Bidirectional (3/10 ↔ 0.3).
+    // Each question's answerKind alternates: 'number' for frac→dec,
+    // 'fraction' for dec→frac. Answer-equivalence via cross-multiply.
+    function genDecimalFractions() {
+      const denoms = [10, 100, 1000];
+      const denom = denoms[rand(0, 2)];
+      const num = rand(1, denom - 1);
+      const direction = Math.random() < 0.5 ? 'to-decimal' : 'to-fraction';
+
+      if (direction === 'to-decimal') {
+        return {
+          questionText: `${num}/${denom} = ?`,
+          subQuestion: '',
+          answer: num / denom,
+          kind: 'frac-to-dec',
+          answerKind: 'number'
+        };
+      }
+      const decValue = num / denom;
+      return {
+        questionText: `${decValue.toString()} = ?/?`,
+        subQuestion: '',
+        answerNumerator: num,
+        answerDenominator: denom,
+        kind: 'dec-to-frac',
+        answerKind: 'fraction'
+      };
+    }
+
     function nextDecimalQuestion() {
       let q;
       if (dState.activeModule === 'p1-2') {
@@ -1045,6 +1083,13 @@
         q = genAddSub();
       } else if (dState.activeModule === 'p1-4') {
         q = genMulDivPow10();
+      } else if (dState.activeModule === 'p2-1') {
+        q = genDecimalFractions();
+        // P2.1's answerKind varies per question — sync the UI
+        if (q.answerKind && q.answerKind !== dState.answerKind) {
+          dState.answerKind = q.answerKind;
+          applyDrillUI();
+        }
       } else if (dState.submode === 'mixed-dec') {
         q = Math.random() < 0.5 ? genPlaceValue() : genUnitConv();
       } else if (dState.submode === 'unit-conv') {
@@ -1061,7 +1106,10 @@
       setTimeout(() => qEl.classList.remove('pop'), 300);
       const input = document.getElementById('d-answer');
       if (input) input.value = '';
+      document.getElementById('d-numerator').value = '';
+      document.getElementById('d-denominator').value = '';
       if (dState.answerKind === 'number' && input) input.focus();
+      if (dState.answerKind === 'fraction') document.getElementById('d-numerator').focus();
       document.getElementById('d-feedback').textContent = '';
     }
 
@@ -1083,6 +1131,7 @@
       // toggle which input UI is showing
       document.getElementById('d-number-row').classList.toggle('hidden', dState.answerKind !== 'number');
       document.getElementById('d-choice-row').classList.toggle('hidden', dState.answerKind !== 'choice');
+      document.getElementById('d-fraction-row').classList.toggle('hidden', dState.answerKind !== 'fraction');
       // show sub-mode toggle only for modules that have sub-modes (P1.1)
       document.getElementById('d-submode-row').classList.toggle('hidden', dState.activeModule !== 'p1-1');
       if (typeof updateNumpadVisibility === 'function') updateNumpadVisibility();
@@ -1145,18 +1194,21 @@
       nextDecimalQuestion();
     }
 
-    function submitDecimal() {
-      const raw = document.getElementById('d-answer').value.trim();
-      if (raw === '' || dState.current == null) return;
-      const v = parseFloat(raw);
-      if (isNaN(v)) return;
+    function enterDecimalFractions() {
+      dState.activeModule = 'p2-1';
+      // P2.1 alternates per-question; the generator updates dState.answerKind
+      dState.answerKind = 'number';
+      setAnswerInputMode('decimal');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function processDecimalOutcome(isCorrect) {
       const qEl = document.getElementById('d-question');
       const fb = document.getElementById('d-feedback');
-      // Float-tolerant correctness — also matches "1.95" vs "1.950" cleanly,
-      // and is harmless for integer-answer modes (1 - 1 < 0.005).
-      const correct = Math.abs(v - dState.current.answer) < 0.005;
-
-      if (correct) {
+      if (isCorrect) {
         playCorrect();
         dState.score++;
         dState.streak++;
@@ -1184,7 +1236,10 @@
         document.getElementById('d-streak').textContent = '0';
         document.getElementById('d-streak-emoji').textContent = '🔥';
         qEl.classList.add('flash-wrong');
-        fb.textContent = `${i18n[lang].wrong} ${dState.current.answer}`;
+        const expected = dState.current.kind === 'dec-to-frac'
+          ? `${dState.current.answerNumerator}/${dState.current.answerDenominator}`
+          : dState.current.answer;
+        fb.textContent = `${i18n[lang].wrong} ${expected}`;
         fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
         setTimeout(() => {
           qEl.classList.remove('flash-wrong');
@@ -1193,9 +1248,43 @@
       }
     }
 
+    function submitFraction() {
+      if (dState.current == null) return;
+      const numStr = document.getElementById('d-numerator').value.trim();
+      const denStr = document.getElementById('d-denominator').value.trim();
+      if (numStr === '' || denStr === '') return;
+      const num = parseInt(numStr, 10);
+      const den = parseInt(denStr, 10);
+      if (isNaN(num) || isNaN(den) || den === 0) return;
+      // Cross-multiply equivalence: 30/100 == 3/10 because 30*10 == 100*3
+      const correct = num * dState.current.answerDenominator === den * dState.current.answerNumerator;
+      processDecimalOutcome(correct);
+    }
+
+    function submitDecimal() {
+      if (dState.current == null) return;
+      if (dState.current.kind === 'dec-to-frac') {
+        submitFraction();
+        return;
+      }
+      const raw = document.getElementById('d-answer').value.trim();
+      if (raw === '') return;
+      const v = parseFloat(raw);
+      if (isNaN(v)) return;
+      // Float-tolerant: accepts "1.95" and "1.950" equivalently; harmless for int modes
+      const correct = Math.abs(v - dState.current.answer) < 0.005;
+      processDecimalOutcome(correct);
+    }
+
     document.getElementById('d-submit-btn').addEventListener('click', submitDecimal);
     document.getElementById('d-answer').addEventListener('keydown', e => {
       if (e.key === 'Enter') submitDecimal();
+    });
+    document.getElementById('d-fraction-submit-btn').addEventListener('click', submitFraction);
+    ['d-numerator', 'd-denominator'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitFraction();
+      });
     });
     document.querySelectorAll('.d-choice-btn').forEach(btn => {
       btn.addEventListener('click', () => {
