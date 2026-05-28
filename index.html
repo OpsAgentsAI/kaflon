@@ -418,7 +418,7 @@
     const DECIMAL_MODULES = [
       { key: 'p1-1',        he: 'מבנה עשרוני והמרות יחידות', en: 'Place value & unit conversions', enter: enterDecimalDrill },
       { key: 'compare',     he: 'השוואה (>, <, =)', en: 'Compare decimals', enter: enterCompareDecimals },
-      { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract' },
+      { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract', enter: enterAddSubDecimals },
       { key: 'mul-pow10',   he: 'כפל ב-10, 100, 1000', en: 'Multiply by 10, 100, 1000' },
       { key: 'div-pow10',   he: 'חילוק ב-10, 100, 1000', en: 'Divide by 10, 100, 1000' },
       { key: 'fractions',   he: 'שברים עשרוניים (3/10 ↔ 0.3)', en: 'Decimal fractions' },
@@ -865,10 +865,37 @@
       };
     }
 
+    // Generator 4: add + subtract decimals. Answer is a decimal number.
+    function genAddSub() {
+      function pick() {
+        const dp = rand(1, 2);
+        const mult = Math.pow(10, dp);
+        const intPart = rand(1, 9 * mult); // 0.1–9.9 (1dp) or 0.01–9.99 (2dp)
+        const value = intPart / mult;
+        return { value, str: value.toString() };
+      }
+      let a = pick();
+      let b = pick();
+      const op = Math.random() < 0.5 ? '+' : '−';
+      if (op === '−' && a.value < b.value) {
+        [a, b] = [b, a]; // ensure non-negative result
+      }
+      let answer = op === '+' ? a.value + b.value : a.value - b.value;
+      answer = Math.round(answer * 100) / 100; // dodge float artifacts
+      return {
+        questionText: `${a.str} ${op} ${b.str} = ?`,
+        subQuestion: '',
+        answer,
+        kind: 'addsub'
+      };
+    }
+
     function nextDecimalQuestion() {
       let q;
       if (dState.activeModule === 'p1-2') {
         q = genCompare();
+      } else if (dState.activeModule === 'p1-3') {
+        q = genAddSub();
       } else if (dState.submode === 'mixed-dec') {
         q = Math.random() < 0.5 ? genPlaceValue() : genUnitConv();
       } else if (dState.submode === 'unit-conv') {
@@ -920,9 +947,17 @@
       document.getElementById('d-streak-emoji').textContent = '🔥';
     }
 
+    function setAnswerInputMode(mode) {
+      const input = document.getElementById('d-answer');
+      input.setAttribute('inputmode', mode);
+      if (mode === 'decimal') input.setAttribute('step', '0.01');
+      else input.removeAttribute('step');
+    }
+
     function enterDecimalDrill() {
       dState.activeModule = 'p1-1';
       dState.answerKind = 'number';
+      setAnswerInputMode('numeric');
       resetDrillScores();
       applyDrillUI();
       // default to place-value submode visually
@@ -933,6 +968,17 @@
     function enterCompareDecimals() {
       dState.activeModule = 'p1-2';
       dState.answerKind = 'choice';
+      setAnswerInputMode('numeric');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterAddSubDecimals() {
+      dState.activeModule = 'p1-3';
+      dState.answerKind = 'number';
+      setAnswerInputMode('decimal');
       resetDrillScores();
       applyDrillUI();
       showScreen('decimal-drill');
@@ -940,12 +986,17 @@
     }
 
     function submitDecimal() {
-      const v = parseInt(document.getElementById('d-answer').value, 10);
-      if (isNaN(v) || dState.current == null) return;
+      const raw = document.getElementById('d-answer').value.trim();
+      if (raw === '' || dState.current == null) return;
+      const v = parseFloat(raw);
+      if (isNaN(v)) return;
       const qEl = document.getElementById('d-question');
       const fb = document.getElementById('d-feedback');
+      // Float-tolerant correctness — also matches "1.95" vs "1.950" cleanly,
+      // and is harmless for integer-answer modes (1 - 1 < 0.005).
+      const correct = Math.abs(v - dState.current.answer) < 0.005;
 
-      if (v === dState.current.answer) {
+      if (correct) {
         playCorrect();
         dState.score++;
         dState.streak++;
