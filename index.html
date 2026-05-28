@@ -65,6 +65,14 @@
         <div id="table-picker-grid" class="grid grid-cols-5 gap-2"></div>
       </div>
 
+      <div>
+        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="input-style">Input</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button data-pad="off" class="pad-btn px-3 py-3 rounded-2xl bg-teal-50 font-bold active:scale-95 transition" data-i18n="pad-off">Keyboard</button>
+          <button data-pad="on" class="pad-btn px-3 py-3 rounded-2xl bg-teal-50 font-bold active:scale-95 transition" data-i18n="pad-on">On-screen pad</button>
+        </div>
+      </div>
+
       <button id="start-btn" class="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl shadow-lg active:scale-95 hover:shadow-xl transition" data-i18n="start">
         Start! 🚀
       </button>
@@ -94,6 +102,22 @@
         class="answer-input w-full text-5xl text-center py-5 border-4 border-indigo-200 rounded-2xl focus:border-indigo-500 outline-none font-black"
         placeholder="?"
       >
+
+      <!-- On-screen number pad (hidden unless settings.pad === 'on') -->
+      <div id="numpad" class="hidden grid grid-cols-3 gap-2" dir="ltr">
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="7">7</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="8">8</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="9">9</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="4">4</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="5">5</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="6">6</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="1">1</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="2">2</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="3">3</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-orange-100 hover:bg-orange-200 rounded-2xl font-black text-xl active:scale-95 transition" data-key="clear" aria-label="Clear">⌫</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-indigo-50 hover:bg-indigo-100 rounded-2xl font-black text-3xl active:scale-95 transition" data-key="0">0</button>
+        <button class="numpad-btn min-h-[56px] py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-xl active:scale-95 transition" data-key="enter" aria-label="Enter">✓</button>
+      </div>
 
       <div class="grid grid-cols-4 gap-2">
         <button id="submit-btn" class="col-span-3 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">
@@ -141,7 +165,10 @@
         wrong: 'Almost! The answer is',
         great: 'Great streak!',
         amazing: 'Amazing!',
-        fire: 'On fire!'
+        fire: 'On fire!',
+        'input-style': 'Input',
+        'pad-off': 'Keyboard',
+        'pad-on': 'On-screen pad'
       },
       he: {
         mode: 'מצב',
@@ -159,7 +186,10 @@
         wrong: 'כמעט! התשובה היא',
         great: 'רצף יפה!',
         amazing: 'מדהים!',
-        fire: 'בוערים!'
+        fire: 'בוערים!',
+        'input-style': 'שיטת הקלדה',
+        'pad-off': 'מקלדת',
+        'pad-on': 'לוח ספרות'
       }
     };
 
@@ -186,6 +216,7 @@
       mode: 'multiply',
       diff: 'random',
       table: 5,
+      pad: localStorage.getItem('kaflon-pad') === 'on' ? 'on' : 'off',
       score: 0,
       streak: 0,
       best: parseInt(localStorage.getItem('kaflon-best') || '0', 10),
@@ -218,6 +249,51 @@
     }
     document.querySelectorAll('.diff-btn').forEach(b => b.addEventListener('click', () => selectDiff(b)));
     selectDiff(document.querySelector('[data-diff="random"]'));
+
+    // ---------- input style (numpad toggle) ----------
+    function selectPad(el) {
+      document.querySelectorAll('.pad-btn').forEach(x => {
+        x.classList.remove('bg-teal-600', 'text-white', 'shadow-md');
+        x.classList.add('bg-teal-50');
+      });
+      el.classList.remove('bg-teal-50');
+      el.classList.add('bg-teal-600', 'text-white', 'shadow-md');
+      state.pad = el.dataset.pad;
+      localStorage.setItem('kaflon-pad', state.pad);
+      applyPadVisibility();
+    }
+    function applyPadVisibility() {
+      const numpad = document.getElementById('numpad');
+      const input = document.getElementById('answer');
+      if (state.pad === 'on') {
+        numpad.classList.remove('hidden');
+        // Suppress OS keyboard while still allowing programmatic value updates
+        input.setAttribute('readonly', 'readonly');
+        input.setAttribute('inputmode', 'none');
+      } else {
+        numpad.classList.add('hidden');
+        input.removeAttribute('readonly');
+        input.setAttribute('inputmode', 'numeric');
+      }
+    }
+    document.querySelectorAll('.pad-btn').forEach(b => b.addEventListener('click', () => selectPad(b)));
+    selectPad(document.querySelector(`[data-pad="${state.pad}"]`));
+
+    // Numpad button handler
+    document.querySelectorAll('.numpad-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        const input = document.getElementById('answer');
+        if (key === 'clear') {
+          input.value = '';
+        } else if (key === 'enter') {
+          submit();
+        } else {
+          // append digit (cap at 5 chars — answers are small)
+          if (input.value.length < 5) input.value = input.value + key;
+        }
+      });
+    });
 
     // ---------- table picker ----------
     const tableGrid = document.getElementById('table-picker-grid');
