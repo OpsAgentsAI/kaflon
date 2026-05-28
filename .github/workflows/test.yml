@@ -1,0 +1,66 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Run tests.html in headless Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -g playwright@1.49.1
+          playwright install --with-deps chromium
+
+      - name: Run tests.html against index.html (file:// load)
+        run: |
+          NODE_PATH=$(npm root -g) node -e "
+          const { chromium } = require('playwright');
+          const path = require('path');
+          (async () => {
+            const browser = await chromium.launch({
+              args: ['--disable-web-security', '--allow-file-access-from-files']
+            });
+            const ctx = await browser.newContext();
+            const page = await ctx.newPage();
+            page.on('console', msg => console.log('[browser]', msg.type() + ':', msg.text()));
+            page.on('pageerror', err => console.error('[browser error]', err.message));
+            const url = 'file://' + path.resolve('tests.html');
+            console.log('Opening', url);
+            await page.goto(url);
+            try {
+              await page.waitForFunction(() => document.title !== 'Kaflon Tests', null, { timeout: 30000 });
+            } catch (e) {
+              console.error('Tests never set document.title — page may have errored.');
+              const body = await page.content();
+              console.error('Page snapshot:', body.slice(0, 4000));
+              await browser.close();
+              process.exit(1);
+            }
+            const title = await page.title();
+            const passCount = await page.\$\$eval('.case.pass', els => els.length);
+            const failCount = await page.\$\$eval('.case.fail', els => els.length);
+            console.log('Result title:', title);
+            console.log('Pass:', passCount, ' Fail:', failCount);
+            await browser.close();
+            if (!title.startsWith('PASS')) {
+              console.error('Tests FAILED — ' + failCount + ' of ' + (passCount + failCount) + ' cases failed');
+              process.exit(1);
+            }
+            console.log('Tests PASSED — ' + passCount + ' cases');
+          })().catch(e => { console.error(e); process.exit(1); });
+          "
