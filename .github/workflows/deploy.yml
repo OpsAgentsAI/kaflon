@@ -10,7 +10,12 @@ permissions:
   contents: read
   id-token: write
   pull-requests: write
-  checks: write
+
+env:
+  WIF_PROVIDER: projects/523955774086/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
+  WIF_SA: gha-deployer@opsagent-prod.iam.gserviceaccount.com
+  FIREBASE_PROJECT: opsagent-prod
+  HOSTING_TARGET: kaflon
 
 jobs:
   deploy_live:
@@ -26,17 +31,19 @@ jobs:
       - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: projects/523955774086/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
-          service_account: gha-deployer@opsagent-prod.iam.gserviceaccount.com
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
+
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools@latest
 
       - name: Deploy to Firebase Hosting (live)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
-          projectId: opsagent-prod
-          target: kaflon
-          channelId: live
+        run: |
+          firebase deploy \
+            --only "hosting:${HOSTING_TARGET}" \
+            --project "${FIREBASE_PROJECT}" \
+            --non-interactive \
+            --force
 
   deploy_preview:
     name: Deploy preview channel (PR)
@@ -51,15 +58,34 @@ jobs:
       - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: projects/523955774086/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
-          service_account: gha-deployer@opsagent-prod.iam.gserviceaccount.com
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
+
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools@latest
 
       - name: Deploy to preview channel
-        uses: FirebaseExtended/action-hosting-deploy@v0
+        id: preview
+        run: |
+          CHANNEL="preview-${{ github.event.pull_request.number }}"
+          firebase hosting:channel:deploy "${CHANNEL}" \
+            --only "${HOSTING_TARGET}" \
+            --project "${FIREBASE_PROJECT}" \
+            --expires 7d \
+            --non-interactive \
+            --json > preview-output.json
+          URL=$(jq -r '.result["'${HOSTING_TARGET}'"].url' preview-output.json)
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
-          projectId: opsagent-prod
-          target: kaflon
-          channelId: preview-${{ github.event.pull_request.number }}
-          expires: 7d
+          script: |
+            const url = '${{ steps.preview.outputs.url }}';
+            const body = `🚀 **Preview deploy** — ${url}\n\n7 day TTL. Sandboxed channel ${`preview-${context.issue.number}`}.`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
