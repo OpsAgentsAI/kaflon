@@ -1,0 +1,65 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+  checks: write
+
+jobs:
+  deploy_live:
+    name: Deploy live (kaflon.opsagents.agency)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-live
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/523955774086/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+          service_account: gha-deployer@opsagent-prod.iam.gserviceaccount.com
+
+      - name: Deploy to Firebase Hosting (live)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+          projectId: opsagent-prod
+          target: kaflon
+          channelId: live
+
+  deploy_preview:
+    name: Deploy preview channel (PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/523955774086/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+          service_account: gha-deployer@opsagent-prod.iam.gserviceaccount.com
+
+      - name: Deploy to preview channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+          projectId: opsagent-prod
+          target: kaflon
+          channelId: preview-${{ github.event.pull_request.number }}
+          expires: 7d
