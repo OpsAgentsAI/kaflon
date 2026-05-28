@@ -990,13 +990,15 @@
     }
 
     // Generator 4: add + subtract decimals. Answer is a decimal number.
+    // Returns aDisplay/bDisplay padded to the same dp so the vertical
+    // column render lines up the decimal points (school-style layout).
     function genAddSub() {
       function pick() {
         const dp = rand(1, 2);
         const mult = Math.pow(10, dp);
         const intPart = rand(1, 9 * mult); // 0.1–9.9 (1dp) or 0.01–9.99 (2dp)
         const value = intPart / mult;
-        return { value, str: value.toString() };
+        return { value, dp };
       }
       let a = pick();
       let b = pick();
@@ -1006,9 +1008,14 @@
       }
       let answer = op === '+' ? a.value + b.value : a.value - b.value;
       answer = Math.round(answer * 100) / 100; // dodge float artifacts
+      const maxDp = Math.max(a.dp, b.dp);
+      const aDisplay = a.value.toFixed(maxDp);
+      const bDisplay = b.value.toFixed(maxDp);
       return {
-        questionText: `${a.str} ${op} ${b.str} = ?`,
-        subQuestion: '',
+        questionText: `${aDisplay} ${op} ${bDisplay} = ?`, // fallback / a11y
+        aDisplay,
+        bDisplay,
+        op,
         answer,
         kind: 'addsub'
       };
@@ -1100,7 +1107,21 @@
       dState.current = q;
       const qEl = document.getElementById('d-question');
       const subEl = document.getElementById('d-subquestion');
-      qEl.textContent = q.questionText;
+      if (q.kind === 'addsub') {
+        // School-style vertical column layout — decimal points aligned
+        const opPrefix = q.op + ' ';
+        const w = Math.max(q.aDisplay.length, q.bDisplay.length) + opPrefix.length;
+        const pad = (s) => ' '.repeat(w - s.length) + s;
+        const top = pad(q.aDisplay);
+        const mid = opPrefix + pad(q.bDisplay).slice(opPrefix.length);
+        const bar = '─'.repeat(w);
+        qEl.innerHTML =
+          `<pre style="font-family: 'Courier New', ui-monospace, monospace; ` +
+          `text-align: left; line-height: 1.05; display: inline-block; margin: 0; ` +
+          `font-size: 2.5rem; font-weight: 900;">${top}\n${mid}\n${bar}</pre>`;
+      } else {
+        qEl.textContent = q.questionText;
+      }
       subEl.textContent = q.subQuestion;
       qEl.classList.add('pop');
       setTimeout(() => qEl.classList.remove('pop'), 300);
