@@ -65,6 +65,14 @@
         <div id="table-picker-grid" class="grid grid-cols-5 gap-2"></div>
       </div>
 
+      <div>
+        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="sound">Sound</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button data-sound="off" class="sound-btn px-3 py-3 rounded-2xl bg-amber-50 font-bold active:scale-95 transition" data-i18n="sound-off">Off</button>
+          <button data-sound="on" class="sound-btn px-3 py-3 rounded-2xl bg-amber-50 font-bold active:scale-95 transition" data-i18n="sound-on">On 🔊</button>
+        </div>
+      </div>
+
       <button id="start-btn" class="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl shadow-lg active:scale-95 hover:shadow-xl transition" data-i18n="start">
         Start! 🚀
       </button>
@@ -141,7 +149,10 @@
         wrong: 'Almost! The answer is',
         great: 'Great streak!',
         amazing: 'Amazing!',
-        fire: 'On fire!'
+        fire: 'On fire!',
+        sound: 'Sound',
+        'sound-off': 'Off',
+        'sound-on': 'On 🔊'
       },
       he: {
         mode: 'מצב',
@@ -159,7 +170,10 @@
         wrong: 'כמעט! התשובה היא',
         great: 'רצף יפה!',
         amazing: 'מדהים!',
-        fire: 'בוערים!'
+        fire: 'בוערים!',
+        sound: 'צליל',
+        'sound-off': 'כבוי',
+        'sound-on': 'דלוק 🔊'
       }
     };
 
@@ -186,11 +200,50 @@
       mode: 'multiply',
       diff: 'random',
       table: 5,
+      sound: localStorage.getItem('kaflon-sound') === 'on' ? 'on' : 'off',
       score: 0,
       streak: 0,
       best: parseInt(localStorage.getItem('kaflon-best') || '0', 10),
       current: null
     };
+
+    // ---------- sound (Web Audio API, lazy-init) ----------
+    let audioCtx = null;
+    function ensureAudio() {
+      if (audioCtx) return audioCtx;
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+      return audioCtx;
+    }
+    function playTone(freq, duration, opts = {}) {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = opts.type || 'sine';
+      osc.frequency.value = freq;
+      const now = ctx.currentTime + (opts.startOffset || 0);
+      const peak = opts.peak ?? 0.18;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(peak, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.05);
+    }
+    function playCorrect() {
+      if (state.sound !== 'on') return;
+      // C major chord arpeggio: C5 (523.25), E5 (659.25), G5 (783.99)
+      playTone(523.25, 0.18, { startOffset: 0.00 });
+      playTone(659.25, 0.18, { startOffset: 0.06 });
+      playTone(783.99, 0.28, { startOffset: 0.12 });
+    }
+    function playWrong() {
+      if (state.sound !== 'on') return;
+      // Gentle low note: A3 → G3 dip, triangle wave for softness
+      playTone(220.00, 0.32, { type: 'triangle', peak: 0.14 });
+    }
 
     // ---------- mode buttons ----------
     function selectMode(el) {
@@ -218,6 +271,22 @@
     }
     document.querySelectorAll('.diff-btn').forEach(b => b.addEventListener('click', () => selectDiff(b)));
     selectDiff(document.querySelector('[data-diff="random"]'));
+
+    // ---------- sound toggle ----------
+    function selectSound(el) {
+      document.querySelectorAll('.sound-btn').forEach(x => {
+        x.classList.remove('bg-amber-500', 'text-white', 'shadow-md');
+        x.classList.add('bg-amber-50');
+      });
+      el.classList.remove('bg-amber-50');
+      el.classList.add('bg-amber-500', 'text-white', 'shadow-md');
+      state.sound = el.dataset.sound;
+      localStorage.setItem('kaflon-sound', state.sound);
+      // Click-to-enable unlocks the AudioContext (browser requires user gesture)
+      if (state.sound === 'on') ensureAudio();
+    }
+    document.querySelectorAll('.sound-btn').forEach(b => b.addEventListener('click', () => selectSound(b)));
+    selectSound(document.querySelector(`[data-sound="${state.sound}"]`));
 
     // ---------- table picker ----------
     const tableGrid = document.getElementById('table-picker-grid');
@@ -309,6 +378,7 @@
       const fb = document.getElementById('feedback');
 
       if (v === state.current.answer) {
+        playCorrect();
         state.score++;
         state.streak++;
         if (state.streak > state.best) {
@@ -330,6 +400,7 @@
           nextQuestion();
         }, 700);
       } else {
+        playWrong();
         state.streak = 0;
         document.getElementById('streak').textContent = '0';
         document.getElementById('streak-emoji').textContent = '🔥';
