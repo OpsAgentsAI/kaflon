@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#6366f1">
-  <title>Kaflon · כפלון — multiplication & division practice</title>
+  <title>Kaflon · כפלון — תרגול מתמטיקה לילדים</title>
   <link rel="canonical" href="https://kaflon.opsagents.agency/">
-  <meta name="description" content="Free open-source multiplication & division practice for kids. Built with Claude Code.">
+  <meta name="description" content="תרגול חינמי של כפל, חילוק, שברים ועשרוניים לילדים. קוד פתוח, בלי הרשמה, בלי פרסומות.">
   <meta property="og:title" content="Kaflon · כפלון">
-  <meta property="og:description" content="Free open-source multiplication & division practice for kids.">
+  <meta property="og:description" content="תרגול מתמטיקה חינמי לילדים — כפל, חילוק, ועוד.">
   <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%96%3C/text%3E%3C/svg%3E">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
-    body { font-family: 'Inter', 'Heebo', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-    [dir="rtl"] { font-family: 'Heebo', 'Inter', system-ui, sans-serif; }
+    body { font-family: 'Heebo', 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+    [dir="ltr"] { font-family: 'Inter', 'Heebo', system-ui, sans-serif; }
     .answer-input::-webkit-outer-spin-button,
     .answer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .answer-input { -moz-appearance: textfield; }
@@ -25,49 +25,85 @@
     .flash-wrong { animation: flash-wrong 0.4s ease-in-out; background-color: rgb(254 226 226); }
     @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     .pop { animation: pop 0.3s ease-out; }
+    /* Math expressions stay LTR even in RTL layouts */
+    .math { direction: ltr; unicode-bidi: isolate; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col items-center p-4 pt-8">
 
   <div id="app" class="w-full max-w-md">
 
-    <header class="flex items-center justify-between mb-6">
+    <header class="flex items-center justify-between mb-6 gap-2">
       <h1 class="text-4xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
         Kaflon
       </h1>
-      <button id="lang-toggle" class="px-4 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition">
-        עברית
-      </button>
+      <div class="flex gap-2">
+        <button id="profile-chip" class="hidden px-3 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition" aria-label="Switch profile"></button>
+        <button id="lang-toggle" class="px-4 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition">
+          English
+        </button>
+      </div>
     </header>
 
-    <!-- SETTINGS -->
-    <section id="settings" class="bg-white rounded-3xl shadow-xl p-6 space-y-6">
+    <!-- PROFILE PICKER -->
+    <section id="profile-picker" class="bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <h2 class="text-2xl font-black text-center" data-i18n="who-playing">מי משחק?</h2>
+      <div id="profile-grid" class="space-y-3"></div>
+      <button id="add-profile-btn" class="w-full py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-lg active:scale-95 transition" data-i18n="add-kid">
+        + הוסף ילד/ה
+      </button>
+
+      <!-- inline add-profile form -->
+      <div id="add-profile-form" class="hidden space-y-3 border-t pt-4">
+        <input id="new-profile-name" type="text" maxlength="20" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-lg focus:border-indigo-500 outline-none text-center font-bold" placeholder="שם הילד/ה">
+        <div class="grid grid-cols-2 gap-2">
+          <button data-gender="f" class="gender-btn py-3 rounded-xl bg-pink-50 font-bold active:scale-95 transition" data-i18n="girl">בת</button>
+          <button data-gender="m" class="gender-btn py-3 rounded-xl bg-blue-50 font-bold active:scale-95 transition" data-i18n="boy">בן</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="confirm-add-profile" class="py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition" data-i18n="save">שמור</button>
+          <button id="cancel-add-profile" class="py-3 bg-slate-100 rounded-xl font-bold active:scale-95 transition" data-i18n="cancel">ביטול</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS — × ÷ home (Moshe / multiply-divide track) -->
+    <section id="settings" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-6">
 
       <div>
-        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="mode">Mode</label>
+        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="mode">מצב</label>
         <div class="grid grid-cols-3 gap-2">
-          <button data-mode="multiply" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition">×</button>
-          <button data-mode="divide" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition">÷</button>
-          <button data-mode="mixed" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-2xl active:scale-95 transition">×÷</button>
+          <button data-mode="multiply" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition math">×</button>
+          <button data-mode="divide" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition math">÷</button>
+          <button data-mode="mixed" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-2xl active:scale-95 transition math">×÷</button>
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="difficulty">Difficulty</label>
+        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="difficulty">רמת קושי</label>
         <div class="grid grid-cols-2 gap-2">
-          <button data-diff="single" class="diff-btn px-3 py-3 rounded-2xl bg-purple-50 font-bold active:scale-95 transition" data-i18n="single-table">Single table</button>
-          <button data-diff="random" class="diff-btn px-3 py-3 rounded-2xl bg-purple-50 font-bold active:scale-95 transition" data-i18n="random">Random</button>
+          <button data-diff="single" class="diff-btn px-3 py-3 rounded-2xl bg-purple-50 font-bold active:scale-95 transition" data-i18n="single-table">לוח אחד</button>
+          <button data-diff="random" class="diff-btn px-3 py-3 rounded-2xl bg-purple-50 font-bold active:scale-95 transition" data-i18n="random">אקראי</button>
         </div>
       </div>
 
       <div id="table-picker" class="hidden">
-        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="pick-table">Pick a table</label>
+        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="pick-table">בחרו לוח</label>
         <div id="table-picker-grid" class="grid grid-cols-5 gap-2"></div>
       </div>
 
       <button id="start-btn" class="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl shadow-lg active:scale-95 hover:shadow-xl transition" data-i18n="start">
-        Start! 🚀
+        מתחילים! 🚀
       </button>
+    </section>
+
+    <!-- AYALA / DECIMALS — curriculum menu (modules stubbed for v0.3) -->
+    <section id="decimals-menu" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
+      <div>
+        <h2 class="text-2xl font-black" data-i18n="pick-drill">איזה תרגיל היום?</h2>
+        <p class="text-sm text-slate-500 mt-1" data-i18n="decimals-blurb">מסלול שברים עשרוניים — מתחילים בקרוב!</p>
+      </div>
+      <div class="space-y-2" id="decimals-modules"></div>
     </section>
 
     <!-- GAME -->
@@ -75,14 +111,14 @@
 
       <div class="flex justify-between text-base">
         <div class="bg-indigo-50 rounded-full px-4 py-2">
-          <span data-i18n="score">Score</span>: <span id="score" class="font-black text-indigo-600">0</span>
+          <span data-i18n="score">ניקוד</span>: <span id="score" class="font-black text-indigo-600">0</span>
         </div>
         <div class="bg-orange-50 rounded-full px-4 py-2">
-          <span data-i18n="streak">Streak</span>: <span id="streak" class="font-black text-orange-600">0</span> <span id="streak-emoji">🔥</span>
+          <span data-i18n="streak">רצף</span>: <span id="streak" class="font-black text-orange-600">0</span> <span id="streak-emoji">🔥</span>
         </div>
       </div>
 
-      <div id="question" class="text-7xl sm:text-8xl font-black text-center py-10 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl select-none">
+      <div id="question" class="math text-7xl sm:text-8xl font-black text-center py-10 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl select-none">
         7 × 8
       </div>
 
@@ -97,7 +133,7 @@
 
       <div class="grid grid-cols-4 gap-2">
         <button id="submit-btn" class="col-span-3 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">
-          Check ✓
+          בדיקה ✓
         </button>
         <button id="back-btn" class="py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-2xl active:scale-95 transition" aria-label="Settings">
           ⚙
@@ -111,9 +147,9 @@
       <p>
         <a href="https://github.com/OpsAgentsAI/kaflon" class="underline hover:text-indigo-600">GitHub</a>
         ·
-        <span data-i18n="built-with">Built with Claude Code</span>
+        <span data-i18n="built-with">נבנה עם Claude Code</span>
         ·
-        <span data-i18n="free-oss">Free &amp; open source</span>
+        <span data-i18n="free-oss">חינמי וקוד פתוח</span>
       </p>
       <p class="text-slate-400">
         <a href="https://msapps.mobi" class="hover:text-indigo-600">MSApps</a> ·
@@ -141,14 +177,24 @@
         wrong: 'Almost! The answer is',
         great: 'Great streak!',
         amazing: 'Amazing!',
-        fire: 'On fire!'
+        fire: 'On fire!',
+        'who-playing': "Who's playing?",
+        'add-kid': '+ Add kid',
+        girl: 'Girl',
+        boy: 'Boy',
+        save: 'Save',
+        cancel: 'Cancel',
+        'pick-drill': "What are we practicing today?",
+        'decimals-blurb': 'Decimals track — coming soon!',
+        'coming-soon': 'coming soon',
+        'switch-profile': 'Switch profile'
       },
       he: {
         mode: 'מצב',
         difficulty: 'רמת קושי',
         'single-table': 'לוח אחד',
         random: 'אקראי',
-        'pick-table': 'בחרי לוח',
+        'pick-table': 'בחרו לוח',
         start: 'מתחילים! 🚀',
         score: 'ניקוד',
         streak: 'רצף',
@@ -159,11 +205,22 @@
         wrong: 'כמעט! התשובה היא',
         great: 'רצף יפה!',
         amazing: 'מדהים!',
-        fire: 'בוערים!'
+        fire: 'בוערים!',
+        'who-playing': 'מי משחק?',
+        'add-kid': '+ הוסף ילד/ה',
+        girl: 'בת',
+        boy: 'בן',
+        save: 'שמור',
+        cancel: 'ביטול',
+        'pick-drill': 'איזה תרגיל היום?',
+        'decimals-blurb': 'מסלול שברים עשרוניים — מתחילים בקרוב!',
+        'coming-soon': 'בקרוב',
+        'switch-profile': 'החלף פרופיל'
       }
     };
 
-    let lang = localStorage.getItem('kaflon-lang') || (navigator.language?.startsWith('he') ? 'he' : 'en');
+    // Hebrew is the default (kids app for Israeli kids)
+    let lang = localStorage.getItem('kaflon-lang') || 'he';
 
     function applyLang() {
       document.documentElement.lang = lang;
@@ -174,6 +231,9 @@
       });
       document.getElementById('lang-toggle').textContent = lang === 'en' ? 'עברית' : 'English';
       localStorage.setItem('kaflon-lang', lang);
+      renderProfileChip();
+      renderProfileGrid();
+      renderDecimalsMenu();
     }
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
@@ -181,16 +241,179 @@
       applyLang();
     });
 
-    // ---------- state ----------
+    // ---------- profiles ----------
+    // One-shot migration: legacy `kaflon-best` belongs to Moshe (the original kid)
+    const legacyBest = localStorage.getItem('kaflon-best');
+    if (legacyBest && !localStorage.getItem('kaflon.profiles.moshe.best')) {
+      localStorage.setItem('kaflon.profiles.moshe.best', legacyBest);
+      localStorage.removeItem('kaflon-best');
+    }
+
+    // Seed default profiles on first load
+    let profiles = JSON.parse(localStorage.getItem('kaflon.profiles') || 'null');
+    if (!profiles) {
+      profiles = [
+        { id: 'moshe', name: { he: 'משה', en: 'Moshe' }, gender: 'm', track: 'multiply-divide' },
+        { id: 'ayala', name: { he: 'איילה', en: 'Ayala' }, gender: 'f', track: 'decimals' }
+      ];
+      localStorage.setItem('kaflon.profiles', JSON.stringify(profiles));
+    }
+
+    function saveProfiles() {
+      localStorage.setItem('kaflon.profiles', JSON.stringify(profiles));
+    }
+
+    let activeProfileId = localStorage.getItem('kaflon.activeProfile');
+
+    function activeProfile() {
+      return profiles.find(p => p.id === activeProfileId) || null;
+    }
+
+    function showScreen(id) {
+      ['profile-picker', 'settings', 'decimals-menu', 'game'].forEach(s => {
+        document.getElementById(s).classList.toggle('hidden', s !== id);
+      });
+    }
+
+    function routeProfile() {
+      const p = activeProfile();
+      if (!p) {
+        showScreen('profile-picker');
+        document.getElementById('profile-chip').classList.add('hidden');
+        return;
+      }
+      document.getElementById('profile-chip').classList.remove('hidden');
+      renderProfileChip();
+      if (p.track === 'decimals') {
+        showScreen('decimals-menu');
+      } else {
+        // multiply-divide is the default
+        loadBestForActive();
+        showScreen('settings');
+      }
+    }
+
+    function renderProfileChip() {
+      const p = activeProfile();
+      if (!p) return;
+      const chip = document.getElementById('profile-chip');
+      const name = p.name[lang] || p.name.he || p.name.en;
+      const arrow = lang === 'he' ? '‹' : '›';
+      chip.textContent = `${name} ${arrow}`;
+      chip.title = i18n[lang]['switch-profile'];
+    }
+
+    function renderProfileGrid() {
+      const grid = document.getElementById('profile-grid');
+      grid.innerHTML = '';
+      profiles.forEach(p => {
+        const btn = document.createElement('button');
+        const name = p.name[lang] || p.name.he || p.name.en;
+        const emoji = p.gender === 'f' ? '👧' : p.gender === 'm' ? '👦' : '🧒';
+        btn.className = 'w-full py-5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-2xl font-black text-2xl shadow-md active:scale-95 hover:shadow-lg transition';
+        btn.textContent = `${emoji} ${name}`;
+        btn.addEventListener('click', () => {
+          activeProfileId = p.id;
+          localStorage.setItem('kaflon.activeProfile', p.id);
+          routeProfile();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    // Decimals curriculum stub (12 modules — Ayala v0.4+ work)
+    const DECIMAL_MODULES = [
+      { key: 'place-value', he: 'מבנה עשרוני (עד 3 ספרות)', en: 'Place value (3 decimal places)' },
+      { key: 'unit-conv',   he: 'המרות יחידות (עשיריות / מאיות / אלפיות)', en: 'Unit conversions' },
+      { key: 'compare',     he: 'השוואה (>, <, =)', en: 'Compare decimals' },
+      { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract' },
+      { key: 'mul-pow10',   he: 'כפל ב-10, 100, 1000', en: 'Multiply by 10, 100, 1000' },
+      { key: 'div-pow10',   he: 'חילוק ב-10, 100, 1000', en: 'Divide by 10, 100, 1000' },
+      { key: 'fractions',   he: 'שברים עשרוניים (3/10 ↔ 0.3)', en: 'Decimal fractions' },
+      { key: 'numberline',  he: 'מיקום על ישר המספרים', en: 'Number line' },
+      { key: 'measure',     he: 'מידות (מטר, ס״מ, מ״מ)', en: 'Measurements (m, cm, mm)' },
+      { key: 'percent',     he: 'אחוזים', en: 'Percentages' },
+      { key: 'percent-dec', he: 'אחוזים ממספרים עשרוניים', en: 'Percentages of decimals' },
+      { key: 'mul-dec',     he: 'כפל מספרים עשרוניים', en: 'Decimal × decimal' }
+    ];
+
+    function renderDecimalsMenu() {
+      const list = document.getElementById('decimals-modules');
+      list.innerHTML = '';
+      DECIMAL_MODULES.forEach(m => {
+        const row = document.createElement('div');
+        row.className = 'w-full py-3 px-4 bg-slate-50 rounded-xl flex items-center justify-between text-base opacity-70';
+        const label = document.createElement('span');
+        label.className = 'font-bold';
+        label.textContent = m[lang] || m.he;
+        const tag = document.createElement('span');
+        tag.className = 'text-xs px-2 py-1 bg-slate-200 rounded-full text-slate-600';
+        tag.textContent = i18n[lang]['coming-soon'];
+        row.appendChild(label);
+        row.appendChild(tag);
+        list.appendChild(row);
+      });
+    }
+
+    // ---------- add-profile flow ----------
+    let newProfileGender = 'f';
+    document.getElementById('add-profile-btn').addEventListener('click', () => {
+      document.getElementById('add-profile-form').classList.remove('hidden');
+      document.getElementById('new-profile-name').focus();
+    });
+    document.getElementById('cancel-add-profile').addEventListener('click', () => {
+      document.getElementById('add-profile-form').classList.add('hidden');
+      document.getElementById('new-profile-name').value = '';
+    });
+    document.querySelectorAll('.gender-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.gender-btn').forEach(b => {
+          b.classList.remove('bg-pink-600', 'bg-blue-600', 'text-white');
+          if (b.dataset.gender === 'f') b.classList.add('bg-pink-50');
+          else b.classList.add('bg-blue-50');
+        });
+        btn.classList.remove('bg-pink-50', 'bg-blue-50');
+        btn.classList.add(btn.dataset.gender === 'f' ? 'bg-pink-600' : 'bg-blue-600', 'text-white');
+        newProfileGender = btn.dataset.gender;
+      });
+    });
+    // default selection
+    document.querySelector('.gender-btn[data-gender="f"]').click();
+
+    document.getElementById('confirm-add-profile').addEventListener('click', () => {
+      const name = document.getElementById('new-profile-name').value.trim();
+      if (!name) return;
+      const id = 'k_' + Date.now().toString(36);
+      // new profiles default to multiply-divide track — they can graduate to decimals later
+      profiles.push({ id, name: { he: name, en: name }, gender: newProfileGender, track: 'multiply-divide' });
+      saveProfiles();
+      document.getElementById('new-profile-name').value = '';
+      document.getElementById('add-profile-form').classList.add('hidden');
+      renderProfileGrid();
+    });
+
+    // profile chip → back to picker
+    document.getElementById('profile-chip').addEventListener('click', () => {
+      showScreen('profile-picker');
+    });
+
+    // ---------- state (multiply-divide track) ----------
     const state = {
       mode: 'multiply',
       diff: 'random',
       table: 5,
       score: 0,
       streak: 0,
-      best: parseInt(localStorage.getItem('kaflon-best') || '0', 10),
+      best: 0,
       current: null
     };
+
+    function bestKey() {
+      return `kaflon.profiles.${activeProfileId}.best`;
+    }
+    function loadBestForActive() {
+      state.best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    }
 
     // ---------- mode buttons ----------
     function selectMode(el) {
@@ -279,8 +502,7 @@
 
     // ---------- start ----------
     document.getElementById('start-btn').addEventListener('click', () => {
-      document.getElementById('settings').classList.add('hidden');
-      document.getElementById('game').classList.remove('hidden');
+      showScreen('game');
       state.score = 0;
       state.streak = 0;
       document.getElementById('score').textContent = '0';
@@ -290,8 +512,7 @@
     });
 
     document.getElementById('back-btn').addEventListener('click', () => {
-      document.getElementById('game').classList.add('hidden');
-      document.getElementById('settings').classList.remove('hidden');
+      showScreen('settings');
     });
 
     // ---------- submit ----------
@@ -313,7 +534,7 @@
         state.streak++;
         if (state.streak > state.best) {
           state.best = state.streak;
-          localStorage.setItem('kaflon-best', state.best);
+          localStorage.setItem(bestKey(), state.best);
         }
         document.getElementById('score').textContent = state.score;
         document.getElementById('streak').textContent = state.streak;
@@ -350,6 +571,7 @@
 
     // ---------- boot ----------
     applyLang();
+    routeProfile();
   </script>
 </body>
 </html>
