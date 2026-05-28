@@ -45,6 +45,19 @@ jobs:
             --non-interactive \
             --force
 
+      - name: Refresh kid-qa preview channel (30d TTL)
+        run: |
+          firebase hosting:channel:deploy kid-qa \
+            --only "${HOSTING_TARGET}" \
+            --project "${FIREBASE_PROJECT}" \
+            --expires 30d \
+            --non-interactive \
+            --json > kid-qa-output.json || true
+          if [ -f kid-qa-output.json ]; then
+            URL=$(jq -r '.result["'${HOSTING_TARGET}'"].url // empty' kid-qa-output.json)
+            echo "kid-qa channel URL: ${URL:-<deploy failed; see logs>}"
+          fi
+
   deploy_preview:
     name: Deploy preview channel (PR)
     if: github.event_name == 'pull_request'

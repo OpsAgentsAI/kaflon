@@ -214,6 +214,17 @@
         <button id="d-fraction-submit-btn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
       </div>
 
+      <div id="d-numberline-row" class="hidden space-y-3">
+        <svg id="d-numberline-svg" viewBox="0 0 400 100" class="w-full h-28 cursor-pointer touch-none select-none" style="direction:ltr;">
+          <line x1="20" y1="60" x2="380" y2="60" stroke="#1e293b" stroke-width="3" stroke-linecap="round"></line>
+          <g id="d-numberline-ticks"></g>
+          <g id="d-numberline-marker" class="hidden">
+            <circle id="d-numberline-mark-correct" cx="0" cy="60" r="10" fill="#16a34a" opacity="0.85"></circle>
+            <circle id="d-numberline-mark-tapped" cx="0" cy="60" r="8" fill="#dc2626" opacity="0.85"></circle>
+          </g>
+        </svg>
+      </div>
+
       <button id="d-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
 
       <div id="d-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
@@ -300,7 +311,15 @@
         'place-value': 'Place value',
         'unit-conv': 'Unit conversions',
         'p1-1-name': 'Place value & unit conversions',
-        'back-to-menu': 'Menu'
+        'back-to-menu': 'Menu',
+        'numberline-tap': 'Tap where {target} goes',
+        'numberline-zoom-tenths': 'Tenths (0 → 1)',
+        'numberline-zoom-hundredths': 'Hundredths (0.3 → 0.4)',
+        'percent-question': 'What is {p}% of {n}?',
+        'measure-question': '{value} {from} = ? {to}',
+        'unit-m': 'm',
+        'unit-cm': 'cm',
+        'unit-mm': 'mm'
       },
       he: {
         mode: 'מצב',
@@ -346,7 +365,15 @@
         'place-value': 'מבנה עשרוני',
         'unit-conv': 'המרות יחידות',
         'p1-1-name': 'מבנה עשרוני והמרות יחידות',
-        'back-to-menu': 'תפריט'
+        'back-to-menu': 'תפריט',
+        'numberline-tap': 'איפה {target} על הציר?',
+        'numberline-zoom-tenths': 'עשיריות (0 → 1)',
+        'numberline-zoom-hundredths': 'מאיות (0.3 → 0.4)',
+        'percent-question': 'כמה זה {p}% מ-{n}?',
+        'measure-question': '{value} {from} = ? {to}',
+        'unit-m': 'מטר',
+        'unit-cm': 'ס״מ',
+        'unit-mm': 'מ״מ'
       }
     };
 
@@ -460,9 +487,9 @@
       { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract', enter: enterAddSubDecimals },
       { key: 'mul-div-pow10', he: 'כפל וחילוק ב-10, 100, 1000', en: '× and ÷ by 10, 100, 1000', enter: enterMulDivPow10 },
       { key: 'fractions',   he: 'שברים עשרוניים (3/10 ↔ 0.3)', en: 'Decimal fractions', enter: enterDecimalFractions },
-      { key: 'numberline',  he: 'מיקום על ישר המספרים', en: 'Number line' },
-      { key: 'measure',     he: 'מידות (מטר, ס״מ, מ״מ)', en: 'Measurements (m, cm, mm)' },
-      { key: 'percent',     he: 'אחוזים', en: 'Percentages' },
+      { key: 'numberline',  he: 'מיקום על ישר המספרים', en: 'Number line', enter: enterNumberLine },
+      { key: 'measure',     he: 'מידות (מטר, ס״מ, מ״מ)', en: 'Measurements (m, cm, mm)', enter: enterMeasurements },
+      { key: 'percent',     he: 'אחוזים', en: 'Percentages', enter: enterPercentages },
       { key: 'percent-dec', he: 'אחוזים ממספרים עשרוניים', en: 'Percentages of decimals' },
       { key: 'mul-dec',     he: 'כפל מספרים עשרוניים', en: 'Decimal × decimal' }
     ];
@@ -1082,6 +1109,126 @@
       };
     }
 
+    // Generator P2.2: number line tap. Two zoom levels: tenths (0-1) and
+    // hundredths (0.3-0.4). Target answer falls on a tick. Tolerance = ½ tick.
+    function genNumberLine() {
+      const zoom = Math.random() < 0.6 ? 'tenths' : 'hundredths';
+      let min, max, tickCount, target, displayDp;
+      if (zoom === 'tenths') {
+        min = 0; max = 1; tickCount = 10;
+        // pick one of the 10 sub-ticks 0.1 .. 0.9 (avoid endpoints — trivial)
+        const idx = rand(1, 9);
+        target = idx / 10;
+        displayDp = 1;
+      } else {
+        min = 0.3; max = 0.4; tickCount = 10;
+        const idx = rand(1, 9);
+        target = 0.3 + idx / 100;
+        displayDp = 2;
+      }
+      // tolerance is ½ tick width in value units
+      const tolerance = ((max - min) / tickCount) / 2;
+      const targetStr = target.toFixed(displayDp);
+      const template = i18n[lang]['numberline-tap'] || 'Tap where {target} goes';
+      return {
+        questionText: targetStr,
+        subQuestion: template.replace('{target}', targetStr),
+        answer: target,
+        kind: 'numberline',
+        zoom,
+        min,
+        max,
+        tickCount,
+        tolerance,
+        answerKind: 'numberline'
+      };
+    }
+
+    // Generator P2.3: metric measurement conversions. Six directions across
+    // m / cm / mm. Generator picks values so the answer is a clean decimal
+    // matching P1.4's ×10/÷10/×100/÷100/×1000/÷1000 mechanic.
+    function genMeasurements() {
+      // each entry = { from, to, factor }; factor is multiplier from→to
+      const conversions = [
+        { from: 'm',  to: 'cm', factor: 100 },
+        { from: 'cm', to: 'm',  factor: 0.01 },
+        { from: 'cm', to: 'mm', factor: 10 },
+        { from: 'mm', to: 'cm', factor: 0.1 },
+        { from: 'm',  to: 'mm', factor: 1000 },
+        { from: 'mm', to: 'm',  factor: 0.001 }
+      ];
+      const c = conversions[rand(0, conversions.length - 1)];
+      // Build a clean source value: integer for ×, decimal for ÷
+      let value;
+      if (c.factor >= 1) {
+        // going to a smaller unit — pick a small decimal source like 1.5, 0.4, 7.3
+        const wholeMax = c.factor === 1000 ? 9 : 99;
+        const whole = rand(0, wholeMax);
+        const tenth = rand(0, 9);
+        value = parseFloat(`${whole}.${tenth}`);
+        if (value === 0) value = 0.5;
+      } else {
+        // going to a bigger unit — pick a clean multiple of the inverse factor
+        const inverse = Math.round(1 / c.factor); // 100 / 10 / 1000
+        // value is a multiple of inverse so result is integer-ish
+        const multiplier = rand(1, 12);
+        // throw in a partial sometimes so answer is decimal (e.g. 30 mm = 3 cm; 45 mm = 4.5 cm)
+        const partial = Math.random() < 0.4 ? rand(0, inverse - 1) : 0;
+        value = multiplier * inverse + partial;
+      }
+      const answer = parseFloat((value * c.factor).toPrecision(12));
+      const fromLabel = i18n[lang][`unit-${c.from}`] || c.from;
+      const toLabel = i18n[lang][`unit-${c.to}`] || c.to;
+      // Strip trailing zeros from value display
+      const valueStr = (+value.toFixed(6)).toString();
+      const template = i18n[lang]['measure-question'] || '{value} {from} = ? {to}';
+      const questionText = template
+        .replace('{value}', valueStr)
+        .replace('{from}', fromLabel)
+        .replace('{to}', toLabel);
+      return {
+        questionText,
+        subQuestion: '',
+        answer,
+        kind: 'measure',
+        from: c.from,
+        to: c.to,
+        answerKind: 'number'
+      };
+    }
+
+    // Generator P3.1: percentages of whole numbers. Constrained so the answer
+    // is always a whole number — kids learn the mechanic before fractions of
+    // percent (that's P3.2). Percent ∈ {10, 20, 25, 50, 75, 100}.
+    function genPercentages() {
+      const percents = [10, 20, 25, 50, 75, 100];
+      const p = percents[rand(0, percents.length - 1)];
+      // Pick base values that keep the answer whole.
+      // 10%, 20%, 50%, 100% → any multiple of 10
+      // 25% → multiple of 4 (and we use multiples of 20 for clean kid-math)
+      // 75% → multiple of 4 (we use multiples of 20)
+      let base;
+      if (p === 25 || p === 75) {
+        const k = rand(1, 10); // 20, 40, ..., 200
+        base = k * 20;
+      } else {
+        const k = rand(1, 20); // 10, 20, ..., 200
+        base = k * 10;
+      }
+      const answer = (base * p) / 100;
+      const template = i18n[lang]['percent-question'] || 'What is {p}% of {n}?';
+      const questionText = template.replace('{p}', p).replace('{n}', base);
+      return {
+        questionText,
+        subQuestion: '',
+        answer,
+        kind: 'percent',
+        percent: p,
+        base,
+        answerKind: 'number'
+      };
+    }
+
     function nextDecimalQuestion() {
       let q;
       if (dState.activeModule === 'p1-2') {
@@ -1097,6 +1244,12 @@
           dState.answerKind = q.answerKind;
           applyDrillUI();
         }
+      } else if (dState.activeModule === 'p2-2') {
+        q = genNumberLine();
+      } else if (dState.activeModule === 'p2-3') {
+        q = genMeasurements();
+      } else if (dState.activeModule === 'p3-1') {
+        q = genPercentages();
       } else if (dState.submode === 'mixed-dec') {
         q = Math.random() < 0.5 ? genPlaceValue() : genUnitConv();
       } else if (dState.submode === 'unit-conv') {
@@ -1122,6 +1275,11 @@
           `<span style="grid-column: 1 / span 2; border-top: 5px solid #1e293b; ` +
           `margin-top: 0.1em;"></span>` +
           `</div>`;
+      } else if (q.kind === 'numberline') {
+        // The big question label is the target value; the line+ticks live in
+        // the answer row. Sub-question reads "tap where X goes".
+        qEl.textContent = q.questionText;
+        renderNumberLine(q);
       } else {
         qEl.textContent = q.questionText;
       }
@@ -1156,10 +1314,86 @@
       document.getElementById('d-number-row').classList.toggle('hidden', dState.answerKind !== 'number');
       document.getElementById('d-choice-row').classList.toggle('hidden', dState.answerKind !== 'choice');
       document.getElementById('d-fraction-row').classList.toggle('hidden', dState.answerKind !== 'fraction');
+      document.getElementById('d-numberline-row').classList.toggle('hidden', dState.answerKind !== 'numberline');
       // show sub-mode toggle only for modules that have sub-modes (P1.1)
       document.getElementById('d-submode-row').classList.toggle('hidden', dState.activeModule !== 'p1-1');
       if (typeof updateNumpadVisibility === 'function') updateNumpadVisibility();
     }
+
+    // ---------- number line (P2.2) rendering + tap handling ----------
+    // SVG coords: x=20 (min) → x=380 (max). 360px line, tickCount ticks.
+    const NL_X0 = 20, NL_X1 = 380, NL_WIDTH = NL_X1 - NL_X0;
+
+    function nlValueToX(value, min, max) {
+      return NL_X0 + ((value - min) / (max - min)) * NL_WIDTH;
+    }
+
+    function nlXToValue(x, min, max) {
+      const clamped = Math.max(NL_X0, Math.min(NL_X1, x));
+      return min + ((clamped - NL_X0) / NL_WIDTH) * (max - min);
+    }
+
+    function renderNumberLine(q) {
+      const ticksG = document.getElementById('d-numberline-ticks');
+      ticksG.innerHTML = '';
+      const ns = 'http://www.w3.org/2000/svg';
+      const labelDp = q.zoom === 'tenths' ? 1 : 2;
+      for (let i = 0; i <= q.tickCount; i++) {
+        const v = q.min + (i * (q.max - q.min)) / q.tickCount;
+        const x = nlValueToX(v, q.min, q.max);
+        const isMajor = (i === 0 || i === q.tickCount);
+        const tick = document.createElementNS(ns, 'line');
+        tick.setAttribute('x1', x);
+        tick.setAttribute('x2', x);
+        tick.setAttribute('y1', isMajor ? 45 : 52);
+        tick.setAttribute('y2', isMajor ? 75 : 68);
+        tick.setAttribute('stroke', '#1e293b');
+        tick.setAttribute('stroke-width', isMajor ? 3 : 2);
+        tick.setAttribute('stroke-linecap', 'round');
+        ticksG.appendChild(tick);
+        if (isMajor) {
+          const label = document.createElementNS(ns, 'text');
+          label.setAttribute('x', x);
+          label.setAttribute('y', 95);
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('font-size', 14);
+          label.setAttribute('font-weight', 700);
+          label.setAttribute('fill', '#475569');
+          label.textContent = (+v.toFixed(labelDp)).toString();
+          ticksG.appendChild(label);
+        }
+      }
+      document.getElementById('d-numberline-marker').classList.add('hidden');
+    }
+
+    function handleNumberLineTap(evt) {
+      if (dState.current == null || dState.current.kind !== 'numberline') return;
+      const svg = document.getElementById('d-numberline-svg');
+      const pt = svg.createSVGPoint();
+      const touch = evt.touches && evt.touches[0];
+      pt.x = touch ? touch.clientX : evt.clientX;
+      pt.y = touch ? touch.clientY : evt.clientY;
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return;
+      const local = pt.matrixTransform(ctm.inverse());
+      const q = dState.current;
+      const tappedValue = nlXToValue(local.x, q.min, q.max);
+      const correct = Math.abs(tappedValue - q.answer) <= q.tolerance;
+      // Show visual feedback markers
+      const correctMark = document.getElementById('d-numberline-mark-correct');
+      const tappedMark = document.getElementById('d-numberline-mark-tapped');
+      correctMark.setAttribute('cx', nlValueToX(q.answer, q.min, q.max));
+      tappedMark.setAttribute('cx', nlValueToX(tappedValue, q.min, q.max));
+      tappedMark.setAttribute('fill', correct ? '#16a34a' : '#dc2626');
+      document.getElementById('d-numberline-marker').classList.remove('hidden');
+      processDecimalOutcome(correct);
+    }
+
+    document.getElementById('d-numberline-svg').addEventListener('click', handleNumberLineTap);
+    document.getElementById('d-numberline-svg').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      handleNumberLineTap(e);
+    }, { passive: false });
 
     function resetDrillScores() {
       dState.score = 0;
@@ -1223,6 +1457,35 @@
       // P2.1 alternates per-question; the generator updates dState.answerKind
       dState.answerKind = 'number';
       setAnswerInputMode('decimal');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterNumberLine() {
+      dState.activeModule = 'p2-2';
+      dState.answerKind = 'numberline';
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterMeasurements() {
+      dState.activeModule = 'p2-3';
+      dState.answerKind = 'number';
+      setAnswerInputMode('decimal');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterPercentages() {
+      dState.activeModule = 'p3-1';
+      dState.answerKind = 'number';
+      setAnswerInputMode('numeric');
       resetDrillScores();
       applyDrillUI();
       showScreen('decimal-drill');
@@ -1333,7 +1596,10 @@
       gen: {
         placeValue: genPlaceValue,
         unitConv: genUnitConv,
-        compare: genCompare
+        compare: genCompare,
+        numberLine: genNumberLine,
+        measurements: genMeasurements,
+        percentages: genPercentages
       },
       rand,
       PLACES,

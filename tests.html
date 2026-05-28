@@ -203,6 +203,114 @@
         assert(cmp && typeof cmp.enter === 'function', 'compare missing enter()');
       });
 
+      test('numberline/measure/percent modules are now active (have enter())', () => {
+        ['numberline', 'measure', 'percent'].forEach(key => {
+          const m = K.DECIMAL_MODULES.find(x => x.key === key);
+          assert(m && typeof m.enter === 'function', key + ' missing enter()');
+        });
+      });
+
+      // ------ genNumberLine (P2.2) ------
+      test('genNumberLine returns a target inside [min, max]', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.numberLine();
+          assert(q.kind === 'numberline', 'wrong kind: ' + q.kind);
+          assert(q.answer >= q.min && q.answer <= q.max,
+            'answer outside range: ' + q.answer);
+          assert(q.tickCount === 10, 'expected 10 ticks: ' + q.tickCount);
+        }
+      });
+
+      test('genNumberLine tolerance is exactly half a tick width', () => {
+        for (let i = 0; i < 100; i++) {
+          const q = K.gen.numberLine();
+          const tickWidth = (q.max - q.min) / q.tickCount;
+          const expected = tickWidth / 2;
+          assert(Math.abs(q.tolerance - expected) < 1e-9,
+            'tolerance ' + q.tolerance + ' != half-tick ' + expected);
+        }
+      });
+
+      test('genNumberLine targets land on sub-tick positions 1..9', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.numberLine();
+          const offset = (q.answer - q.min) / ((q.max - q.min) / q.tickCount);
+          const rounded = Math.round(offset);
+          assert(Math.abs(offset - rounded) < 1e-9, 'target off-tick: offset=' + offset);
+          assert(rounded >= 1 && rounded <= 9, 'target at endpoint: ' + rounded);
+        }
+      });
+
+      test('genNumberLine both zoom modes appear over enough samples', () => {
+        const zooms = new Set();
+        for (let i = 0; i < 500; i++) zooms.add(K.gen.numberLine().zoom);
+        assert(zooms.has('tenths') && zooms.has('hundredths'),
+          'one zoom never sampled: ' + [...zooms]);
+      });
+
+      // ------ genMeasurements (P2.3) ------
+      test('genMeasurements covers all 6 conversion directions', () => {
+        const seen = new Set();
+        for (let i = 0; i < 600; i++) {
+          const q = K.gen.measurements();
+          seen.add(q.from + '->' + q.to);
+        }
+        ['m->cm', 'cm->m', 'cm->mm', 'mm->cm', 'm->mm', 'mm->m'].forEach(dir =>
+          assert(seen.has(dir), 'direction never sampled: ' + dir));
+      });
+
+      test('genMeasurements answer is finite, non-negative, math-correct', () => {
+        const factors = {
+          'm->cm': 100, 'cm->m': 0.01,
+          'cm->mm': 10, 'mm->cm': 0.1,
+          'm->mm': 1000, 'mm->m': 0.001
+        };
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.measurements();
+          assert(q.kind === 'measure', 'wrong kind: ' + q.kind);
+          assert(Number.isFinite(q.answer), 'non-finite answer: ' + q.answer);
+          assert(q.answer >= 0, 'negative answer: ' + q.answer);
+          const m = q.questionText.match(/^([\d.]+)/);
+          assert(m, 'no source value in question: ' + q.questionText);
+          const source = parseFloat(m[1]);
+          const expected = source * factors[q.from + '->' + q.to];
+          assert(Math.abs(q.answer - expected) < 1e-6,
+            'wrong math: ' + source + ' ' + q.from + ' -> ' + q.answer + ' ' + q.to);
+        }
+      });
+
+      // ------ genPercentages (P3.1) ------
+      test('genPercentages uses only the curriculum percent values', () => {
+        const allowed = new Set([10, 20, 25, 50, 75, 100]);
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.percentages();
+          assert(allowed.has(q.percent), 'unexpected percent: ' + q.percent);
+        }
+      });
+
+      test('genPercentages always returns a whole-number answer', () => {
+        for (let i = 0; i < 400; i++) {
+          const q = K.gen.percentages();
+          assert(q.kind === 'percent', 'wrong kind: ' + q.kind);
+          assert(Number.isInteger(q.answer), 'non-integer answer: ' + q.answer);
+          assert(q.answer >= 0, 'negative answer: ' + q.answer);
+          assert(q.percent * q.base === q.answer * 100,
+            'wrong math: ' + q.percent + '% of ' + q.base + ' != ' + q.answer);
+        }
+      });
+
+      test('genPercentages base is always positive', () => {
+        for (let i = 0; i < 200; i++) {
+          assert(K.gen.percentages().base > 0, 'non-positive base');
+        }
+      });
+
+      test('genPercentages hits at least 5 of 6 percent values over 200 samples', () => {
+        const seen = new Set();
+        for (let i = 0; i < 200; i++) seen.add(K.gen.percentages().percent);
+        assert(seen.size >= 5, 'only ' + seen.size + ' percent values seen: ' + [...seen]);
+      });
+
       finish();
     }
 
