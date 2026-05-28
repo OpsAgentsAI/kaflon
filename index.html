@@ -103,6 +103,14 @@
         </div>
       </div>
 
+      <div>
+        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="numpad">לוח ספרות 🔢</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="numpad-off-btn" class="numpad-toggle-btn px-3 py-3 rounded-2xl bg-slate-100 font-bold active:scale-95 transition" data-i18n="off">כבוי</button>
+          <button id="numpad-on-btn" class="numpad-toggle-btn px-3 py-3 rounded-2xl bg-slate-100 font-bold active:scale-95 transition" data-i18n="on">פעיל</button>
+        </div>
+      </div>
+
       <button id="start-btn" class="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl shadow-lg active:scale-95 hover:shadow-xl transition" data-i18n="start">
         מתחילים! 🚀
       </button>
@@ -202,6 +210,25 @@
       <div id="d-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
 
+    <!-- NUMPAD — floats below the answer; visible only in game/decimal-drill, number-mode, when toggle is on -->
+    <div id="numpad" class="hidden w-full max-w-md space-y-2 mt-2">
+      <div class="grid grid-cols-3 gap-2">
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="7">7</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="8">8</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="9">9</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="4">4</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="5">5</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="6">6</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="1">1</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="2">2</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="3">3</button>
+        <button id="numpad-dot" class="numpad-key hidden py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key=".">.</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="0">0</button>
+        <button class="numpad-key py-4 bg-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-indigo-50 transition" data-key="backspace">⌫</button>
+      </div>
+      <button class="numpad-key w-full py-4 bg-green-500 text-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-green-600 transition" data-key="enter">✓</button>
+    </div>
+
     <footer class="text-center text-xs text-slate-500 mt-8 space-y-1">
       <p>
         <a href="https://github.com/OpsAgentsAI/kaflon" class="underline hover:text-indigo-600">GitHub</a>
@@ -251,6 +278,7 @@
         doubles: 'Doubles',
         halves: 'Halves',
         sound: 'Sound',
+        numpad: 'Numpad',
         on: 'On',
         off: 'Off',
         'place-value-mode': 'Places',
@@ -296,6 +324,7 @@
         doubles: 'כפל ב-2',
         halves: 'חצאים',
         sound: 'צלילים',
+        numpad: 'לוח ספרות',
         on: 'פעיל',
         off: 'כבוי',
         'place-value-mode': 'מקומות',
@@ -366,6 +395,7 @@
       ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill'].forEach(s => {
         document.getElementById(s).classList.toggle('hidden', s !== id);
       });
+      if (typeof updateNumpadVisibility === 'function') updateNumpadVisibility();
     }
 
     function routeProfile() {
@@ -508,6 +538,7 @@
       streak: 0,
       best: 0,
       soundOn: false,
+      numpadOn: false,
       current: null
     };
 
@@ -517,10 +548,16 @@
     function soundKey() {
       return `kaflon.profiles.${activeProfileId}.sound`;
     }
+    function numpadKey() {
+      return `kaflon.profiles.${activeProfileId}.numpad`;
+    }
     function loadBestForActive() {
       state.best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
       state.soundOn = localStorage.getItem(soundKey()) === 'on';
+      state.numpadOn = localStorage.getItem(numpadKey()) === 'on';
       applySoundButtons();
+      applyNumpadButtons();
+      updateNumpadVisibility();
     }
 
     // ---------- audio (Web Audio API, no mp3 assets) ----------
@@ -583,6 +620,85 @@
       applySoundButtons();
     });
     applySoundButtons();
+
+    // ---------- numpad (v0.1, off by default) ----------
+    function applyNumpadButtons() {
+      const on = document.getElementById('numpad-on-btn');
+      const off = document.getElementById('numpad-off-btn');
+      if (!on || !off) return;
+      [on, off].forEach(b => {
+        b.classList.remove('bg-purple-600', 'text-white', 'shadow-md');
+        b.classList.add('bg-slate-100');
+      });
+      const target = state.numpadOn ? on : off;
+      target.classList.remove('bg-slate-100');
+      target.classList.add('bg-purple-600', 'text-white', 'shadow-md');
+    }
+    document.getElementById('numpad-on-btn').addEventListener('click', () => {
+      state.numpadOn = true;
+      if (activeProfileId) localStorage.setItem(numpadKey(), 'on');
+      applyNumpadButtons();
+      updateNumpadVisibility();
+    });
+    document.getElementById('numpad-off-btn').addEventListener('click', () => {
+      state.numpadOn = false;
+      if (activeProfileId) localStorage.setItem(numpadKey(), 'off');
+      applyNumpadButtons();
+      updateNumpadVisibility();
+    });
+    applyNumpadButtons();
+
+    function activeAnswerInput() {
+      if (!document.getElementById('game').classList.contains('hidden'))
+        return document.getElementById('answer');
+      if (!document.getElementById('decimal-drill').classList.contains('hidden'))
+        return document.getElementById('d-answer');
+      return null;
+    }
+    function activeSubmitFn() {
+      if (!document.getElementById('game').classList.contains('hidden')) return submit;
+      if (!document.getElementById('decimal-drill').classList.contains('hidden')) return submitDecimal;
+      return null;
+    }
+
+    function updateNumpadVisibility() {
+      const np = document.getElementById('numpad');
+      if (!np) return;
+      const inDecimalChoice =
+        !document.getElementById('decimal-drill').classList.contains('hidden') &&
+        dState.answerKind === 'choice';
+      const inGameOrDrill = activeAnswerInput() != null;
+      const show = state.numpadOn && inGameOrDrill && !inDecimalChoice;
+      np.classList.toggle('hidden', !show);
+      // Decimal-point key only useful when answers can have a decimal point
+      const showDot =
+        !document.getElementById('decimal-drill').classList.contains('hidden') &&
+        (dState.activeModule === 'p1-3' || dState.activeModule === 'p1-4');
+      document.getElementById('numpad-dot').classList.toggle('hidden', !showDot);
+    }
+
+    document.querySelectorAll('.numpad-key').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        const input = activeAnswerInput();
+        if (!input) return;
+        if (key === 'enter') {
+          const fn = activeSubmitFn();
+          if (fn) fn();
+          return;
+        }
+        if (key === 'backspace') {
+          input.value = input.value.slice(0, -1);
+          return;
+        }
+        if (key === '.') {
+          if (input.value.includes('.')) return; // single dot
+          input.value += '.';
+          return;
+        }
+        input.value += key; // digit
+      });
+    });
 
     // ---------- mode buttons ----------
     const SHAPED_MODES = new Set(['squares', 'doubles', 'halves']);
@@ -969,6 +1085,7 @@
       document.getElementById('d-choice-row').classList.toggle('hidden', dState.answerKind !== 'choice');
       // show sub-mode toggle only for modules that have sub-modes (P1.1)
       document.getElementById('d-submode-row').classList.toggle('hidden', dState.activeModule !== 'p1-1');
+      if (typeof updateNumpadVisibility === 'function') updateNumpadVisibility();
     }
 
     function resetDrillScores() {
