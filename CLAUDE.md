@@ -5,7 +5,7 @@
 Free, MIT-licensed multiplication, division, and decimals practice toy for kids. **One HTML file, no build step.** "View Source" is the documentation. Built for one parent's kid; designed for any parent to fork and adapt for theirs.
 
 Two surfaces share the same game logic:
-- **Web app** (this repo) — Firebase Hosting at `kaflon.opsagents.agency` + `kaflon.web.app`
+- **Web app** (this repo) — Firebase Hosting at `kaflon.web.app`
 - **Cardputer-Adv MicroPython app** — `apps/kaflon.py` in [OpsAgentsAI/anthropic-adv](https://github.com/OpsAgentsAI/anthropic-adv)
 
 ## Tech Stack
@@ -53,8 +53,7 @@ If a feature would break any of these, the answer is "fork it."
 
 ## Quick Reference
 
-- **Live (primary):** <https://kaflon.opsagents.agency>
-- **Live (fallback):** <https://kaflon.web.app>
+- **Live:** <https://kaflon.web.app>
 - **Trello board:** <https://trello.com/b/IOKRU1eM/kaflon>
 - **Local dev:** open `index.html` directly in your browser. No dev server. Reload to see changes
 - **Test before commit:** toggle Heb↔Eng (RTL must not break), resize to 375px (tap targets must stay ≥44px)

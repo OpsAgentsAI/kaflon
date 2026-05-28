@@ -2,7 +2,7 @@
 
 > Free, open-source multiplication & division practice for kids. Built with [Claude Code](https://claude.com/claude-code) in an evening.
 
-**Live:** https://kaflon.opsagents.agency · https://kaflon.web.app
+**Live:** https://kaflon.web.app
 
 A single HTML file. No accounts, no ads, no tracking, no IAPs. Works on any phone, tablet, or laptop. Hebrew (RTL) and English. Fork it, tweak the number range, ship it to your kid.
 

@@ -19,7 +19,7 @@ env:
 
 jobs:
   deploy_live:
-    name: Deploy live (kaflon.opsagents.agency)
+    name: Deploy live (kaflon.web.app)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency:
