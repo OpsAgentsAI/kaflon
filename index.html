@@ -419,8 +419,7 @@
       { key: 'p1-1',        he: 'מבנה עשרוני והמרות יחידות', en: 'Place value & unit conversions', enter: enterDecimalDrill },
       { key: 'compare',     he: 'השוואה (>, <, =)', en: 'Compare decimals', enter: enterCompareDecimals },
       { key: 'add-sub',     he: 'חיבור וחיסור', en: 'Add + subtract', enter: enterAddSubDecimals },
-      { key: 'mul-pow10',   he: 'כפל ב-10, 100, 1000', en: 'Multiply by 10, 100, 1000' },
-      { key: 'div-pow10',   he: 'חילוק ב-10, 100, 1000', en: 'Divide by 10, 100, 1000' },
+      { key: 'mul-div-pow10', he: 'כפל וחילוק ב-10, 100, 1000', en: '× and ÷ by 10, 100, 1000', enter: enterMulDivPow10 },
       { key: 'fractions',   he: 'שברים עשרוניים (3/10 ↔ 0.3)', en: 'Decimal fractions' },
       { key: 'numberline',  he: 'מיקום על ישר המספרים', en: 'Number line' },
       { key: 'measure',     he: 'מידות (מטר, ס״מ, מ״מ)', en: 'Measurements (m, cm, mm)' },
@@ -890,12 +889,46 @@
       };
     }
 
+    // Generator 5: × and ÷ by 10, 100, 1000. Same point-shift mechanic.
+    function genMulDivPow10() {
+      const multipliers = [10, 100, 1000];
+      const m = multipliers[rand(0, 2)];
+      const op = Math.random() < 0.5 ? '×' : '÷';
+      let valueStr, answer;
+
+      if (op === '×') {
+        // Pick a decimal value; m shifts it left to a larger number
+        const dpMax = Math.log10(m); // 1, 2, or 3
+        const dpMin = m === 1000 ? 2 : 1; // keep answers reasonable
+        const dp = rand(dpMin, dpMax);
+        const div = Math.pow(10, dp);
+        const intPart = rand(1, 99);
+        const value = intPart / div;
+        valueStr = value.toString();
+        answer = Math.round(value * m * 10000) / 10000;
+      } else {
+        // ÷ — pick an integer, m shifts it right to a decimal
+        const intPart = rand(1, 999);
+        valueStr = intPart.toString();
+        answer = Math.round((intPart / m) * 10000) / 10000;
+      }
+
+      return {
+        questionText: `${valueStr} ${op} ${m} = ?`,
+        subQuestion: '',
+        answer,
+        kind: 'muldivpow10'
+      };
+    }
+
     function nextDecimalQuestion() {
       let q;
       if (dState.activeModule === 'p1-2') {
         q = genCompare();
       } else if (dState.activeModule === 'p1-3') {
         q = genAddSub();
+      } else if (dState.activeModule === 'p1-4') {
+        q = genMulDivPow10();
       } else if (dState.submode === 'mixed-dec') {
         q = Math.random() < 0.5 ? genPlaceValue() : genUnitConv();
       } else if (dState.submode === 'unit-conv') {
@@ -977,6 +1010,16 @@
 
     function enterAddSubDecimals() {
       dState.activeModule = 'p1-3';
+      dState.answerKind = 'number';
+      setAnswerInputMode('decimal');
+      resetDrillScores();
+      applyDrillUI();
+      showScreen('decimal-drill');
+      nextDecimalQuestion();
+    }
+
+    function enterMulDivPow10() {
+      dState.activeModule = 'p1-4';
       dState.answerKind = 'number';
       setAnswerInputMode('decimal');
       resetDrillScores();
