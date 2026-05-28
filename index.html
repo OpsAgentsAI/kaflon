@@ -49,10 +49,13 @@
           <button data-mode="multiply" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition">×</button>
           <button data-mode="divide" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition">÷</button>
           <button data-mode="mixed" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-2xl active:scale-95 transition">×÷</button>
+          <button data-mode="squares" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-2xl active:scale-95 transition" aria-label="Squares" title="Squares (n × n)">n²</button>
+          <button data-mode="doubles" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-xl active:scale-95 transition" aria-label="Doubles" title="Doubles (n × 2)">×2</button>
+          <button data-mode="halves" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-xl active:scale-95 transition" aria-label="Halves" title="Halves (2n ÷ 2)">÷2</button>
         </div>
       </div>
 
-      <div>
+      <div id="diff-section">
         <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="difficulty">Difficulty</label>
         <div class="grid grid-cols-2 gap-2">
           <button data-diff="single" class="diff-btn px-3 py-3 rounded-2xl bg-purple-50 font-bold active:scale-95 transition" data-i18n="single-table">Single table</button>
@@ -193,6 +196,9 @@
     };
 
     // ---------- mode buttons ----------
+    const DRILL_MODES = new Set(['squares', 'doubles', 'halves']);
+    function isDrillMode(m) { return DRILL_MODES.has(m); }
+
     function selectMode(el) {
       document.querySelectorAll('.mode-btn').forEach(x => {
         x.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
@@ -201,6 +207,11 @@
       el.classList.remove('bg-indigo-50');
       el.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
       state.mode = el.dataset.mode;
+      // Drill modes have a fixed shape — hide difficulty + table picker.
+      const drill = isDrillMode(state.mode);
+      document.getElementById('diff-section').classList.toggle('hidden', drill);
+      if (drill) document.getElementById('table-picker').classList.add('hidden');
+      else if (state.diff === 'single') document.getElementById('table-picker').classList.remove('hidden');
     }
     document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => selectMode(b)));
     selectMode(document.querySelector('[data-mode="multiply"]'));
@@ -242,27 +253,42 @@
     function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
     function nextQuestion() {
-      let op;
-      if (state.mode === 'mixed') op = Math.random() < 0.5 ? '×' : '÷';
-      else op = state.mode === 'multiply' ? '×' : '÷';
-
-      let a, b;
-      if (state.diff === 'single') {
-        a = state.table;
-        b = rand(1, 10);
-      } else {
-        a = rand(1, 10);
-        b = rand(1, 10);
-      }
-
       let questionText, answer;
-      if (op === '×') {
-        questionText = `${a} × ${b}`;
-        answer = a * b;
+
+      if (state.mode === 'squares') {
+        const n = rand(2, 10);
+        questionText = `${n} × ${n}`;
+        answer = n * n;
+      } else if (state.mode === 'doubles') {
+        const n = rand(1, 10);
+        questionText = `${n} × 2`;
+        answer = n * 2;
+      } else if (state.mode === 'halves') {
+        const n = rand(1, 10);
+        questionText = `${n * 2} ÷ 2`;
+        answer = n;
       } else {
-        // division: present (a*b) ÷ b = a so answers are always whole numbers
-        questionText = `${a * b} ÷ ${b}`;
-        answer = a;
+        let op;
+        if (state.mode === 'mixed') op = Math.random() < 0.5 ? '×' : '÷';
+        else op = state.mode === 'multiply' ? '×' : '÷';
+
+        let a, b;
+        if (state.diff === 'single') {
+          a = state.table;
+          b = rand(1, 10);
+        } else {
+          a = rand(1, 10);
+          b = rand(1, 10);
+        }
+
+        if (op === '×') {
+          questionText = `${a} × ${b}`;
+          answer = a * b;
+        } else {
+          // division: present (a*b) ÷ b = a so answers are always whole numbers
+          questionText = `${a * b} ÷ ${b}`;
+          answer = a;
+        }
       }
 
       state.current = { questionText, answer };
