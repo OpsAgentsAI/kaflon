@@ -308,6 +308,80 @@
                'tolerance wrong: ' + K.NL_TOLERANCE);
       });
 
+      // ------ Geometry (Ayala engineering track, card 4A05znX6) ------
+      test('GEO_SHAPES is the 6-shape curriculum surface', () => {
+        assert(Array.isArray(K.GEO_SHAPES), 'not an array');
+        assert(K.GEO_SHAPES.length === 6, 'expected 6 shapes, got ' + K.GEO_SHAPES.length);
+        const keys = K.GEO_SHAPES.map(s => s.key).sort().join(',');
+        assert(keys === 'circle,parall,rect,square,trap,triangle',
+          'wrong shape keys: ' + keys);
+      });
+
+      test('every GEO_SHAPES row carries area + perimeter formulas + legend', () => {
+        K.GEO_SHAPES.forEach(s => {
+          assert(typeof s.area === 'string' && s.area.length > 0, s.key + ' missing area');
+          assert(typeof s.perim === 'string' && s.perim.length > 0, s.key + ' missing perim');
+          assert(typeof s.legendKey === 'string' && s.legendKey.startsWith('geo-'),
+            s.key + ' missing legend key');
+        });
+      });
+
+      test('GEO_PI is locked at 3.14 (kid-verifiable answer)', () => {
+        assert(K.GEO_PI === 3.14, 'GEO_PI drifted: ' + K.GEO_PI);
+      });
+
+      test('genCircle returns either area or perimeter direction', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.circle();
+          assert(q.direction === 'area' || q.direction === 'perim',
+            'bad direction: ' + q.direction);
+          assert(q.kind === 'circle-' + q.direction, 'kind/direction mismatch');
+        }
+      });
+
+      test('genCircle radius is integer in 1..20', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.circle();
+          assert(Number.isInteger(q.r), 'non-integer r: ' + q.r);
+          assert(q.r >= 1 && q.r <= 20, 'r out of range: ' + q.r);
+        }
+      });
+
+      test('genCircle area answer = round(π·r², 2dp)', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.circle();
+          if (q.direction !== 'area') continue;
+          const expected = Math.round(K.GEO_PI * q.r * q.r * 100) / 100;
+          assert(Math.abs(q.answer - expected) < 1e-9,
+            'r=' + q.r + ' area: got ' + q.answer + ', expected ' + expected);
+        }
+      });
+
+      test('genCircle perimeter answer = round(2·π·r, 2dp)', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.circle();
+          if (q.direction !== 'perim') continue;
+          const expected = Math.round(2 * K.GEO_PI * q.r * 100) / 100;
+          assert(Math.abs(q.answer - expected) < 1e-9,
+            'r=' + q.r + ' perim: got ' + q.answer + ', expected ' + expected);
+        }
+      });
+
+      test('genCircle question text contains the radius value', () => {
+        for (let i = 0; i < 100; i++) {
+          const q = K.gen.circle();
+          assert(q.questionText.includes(String(q.r)),
+            'r=' + q.r + ' not in question: ' + q.questionText);
+        }
+      });
+
+      test('genCircle samples both directions over enough runs', () => {
+        const dirs = new Set();
+        for (let i = 0; i < 100; i++) dirs.add(K.gen.circle().direction);
+        assert(dirs.has('area') && dirs.has('perim'),
+          'one direction never sampled: ' + [...dirs]);
+      });
+
       finish();
     }
 
