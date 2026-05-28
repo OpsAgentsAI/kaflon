@@ -1001,6 +1001,21 @@
       showScreen('decimals-menu');
     });
 
+    // ---------- testability surface ----------
+    // Exposes pure generator functions for tests.html. Not used by the app
+    // itself. Adds zero kilobytes to network when devtools is closed; safe
+    // for prod. Tests assert on these directly without touching the DOM.
+    window.__kaflon = {
+      gen: {
+        placeValue: genPlaceValue,
+        unitConv: genUnitConv,
+        compare: genCompare
+      },
+      rand,
+      PLACES,
+      DECIMAL_MODULES
+    };
+
     // ---------- boot ----------
     applyLang();
     routeProfile();

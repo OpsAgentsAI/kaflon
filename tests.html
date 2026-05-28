@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kaflon Tests</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; max-width: 800px; margin: 0 auto; line-height: 1.5; }
+    h1 { margin: 0 0 8px; }
+    h2 { margin: 16px 0 8px; }
+    .pass { color: #16a34a; }
+    .fail { color: #dc2626; }
+    .summary-pass { background: #f0fdf4; border: 2px solid #16a34a; padding: 12px 16px; border-radius: 8px; font-size: 1.2em; font-weight: bold; }
+    .summary-fail { background: #fef2f2; border: 2px solid #dc2626; padding: 12px 16px; border-radius: 8px; font-size: 1.2em; font-weight: bold; }
+    .case { padding: 4px 0; font-family: ui-monospace, Menlo, monospace; font-size: 0.95em; }
+    iframe { display: none; }
+    .hint { color: #64748b; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+  <h1>Kaflon test suite</h1>
+  <p class="hint">
+    Pure-browser tests for the math generators in <code>index.html</code>. No
+    npm install needed &mdash; just open this file in a browser, or hit it from CI.
+    Tests load <code>index.html</code> in a hidden iframe and assert against
+    <code>window.__kaflon</code>.
+  </p>
+
+  <div id="summary"></div>
+  <div id="log"></div>
+
+  <iframe id="app" src="index.html"></iframe>
+
+  <script>
+    const log = document.getElementById('log');
+    const summary = document.getElementById('summary');
+    const results = [];
+
+    function record(name, ok, msg) {
+      results.push({ name, ok, msg });
+      const div = document.createElement('div');
+      div.className = 'case ' + (ok ? 'pass' : 'fail');
+      div.textContent = (ok ? '✓ ' : '✗ ') + name + (msg ? ' — ' + msg : '');
+      log.appendChild(div);
+    }
+
+    function test(name, fn) {
+      try {
+        fn();
+        record(name, true);
+      } catch (e) {
+        record(name, false, e.message);
+      }
+    }
+
+    function assert(cond, msg) {
+      if (!cond) throw new Error(msg || 'assertion failed');
+    }
+
+    function runTests() {
+      const K = document.getElementById('app').contentWindow.__kaflon;
+      if (!K) {
+        record('window.__kaflon is exposed by index.html', false, 'iframe loaded but __kaflon is undefined');
+        finish();
+        return;
+      }
+      record('window.__kaflon is exposed by index.html', true);
+
+      // ------ genPlaceValue ------
+      test('genPlaceValue returns 3-decimal-place number', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.placeValue();
+          assert(/^\d\.\d\d\d$/.test(q.questionText), 'bad format: ' + q.questionText);
+        }
+      });
+
+      test('genPlaceValue answer is integer in 0..9', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.placeValue();
+          assert(Number.isInteger(q.answer), 'non-integer: ' + q.answer);
+          assert(q.answer >= 0 && q.answer <= 9, 'out of range: ' + q.answer);
+        }
+      });
+
+      test('genPlaceValue answer matches the digit at the named place', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.placeValue();
+          const digits = q.questionText.replace('.', '');
+          // digits are: ones, tenths, hundredths, thousandths
+          assert(digits.length === 4, 'expected 4 digits: ' + digits);
+          assert(digits.includes(String(q.answer)), 'answer ' + q.answer + ' not in ' + q.questionText);
+        }
+      });
+
+      test('genPlaceValue carries kind + subQuestion', () => {
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.placeValue();
+          assert(q.kind === 'place-value', 'bad kind: ' + q.kind);
+          assert(q.subQuestion && q.subQuestion.length > 0, 'empty subQuestion');
+        }
+      });
+
+      // ------ genUnitConv ------
+      test('genUnitConv denominator is one of 10, 100, 1000', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.unitConv();
+          const m = q.questionText.match(/\/(\d+)$/);
+          assert(m, 'no denom in: ' + q.questionText);
+          assert([10, 100, 1000].includes(parseInt(m[1], 10)), 'bad denom: ' + m[1]);
+        }
+      });
+
+      test('genUnitConv answer is integer in 1..denom-1', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.unitConv();
+          const denom = parseInt(q.questionText.match(/\/(\d+)$/)[1], 10);
+          assert(Number.isInteger(q.answer), 'non-integer: ' + q.answer);
+          assert(q.answer >= 1 && q.answer < denom, 'out of range: ' + q.answer + ' for denom ' + denom);
+        }
+      });
+
+      test('genUnitConv decimal value * denominator equals the answer', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.unitConv();
+          const m = q.questionText.match(/^([\d.]+)\s*=\s*\?\/(\d+)$/);
+          assert(m, 'bad format: ' + q.questionText);
+          const value = parseFloat(m[1]);
+          const denom = parseInt(m[2], 10);
+          // Use rounding to absorb float drift (e.g. 0.07 * 100 = 7.000000000000001)
+          assert(Math.round(value * denom) === q.answer,
+            q.questionText + ': value*denom=' + (value * denom) + ' but answer=' + q.answer);
+        }
+      });
+
+      // ------ genCompare ------
+      test('genCompare answer is in {-1, 0, 1}', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.compare();
+          assert([-1, 0, 1].includes(q.answer), 'bad answer: ' + q.answer);
+        }
+      });
+
+      test('genCompare answer matches numeric comparison of the two operands', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.compare();
+          const m = q.questionText.match(/^([\d.]+)\s*☐\s*([\d.]+)$/);
+          assert(m, 'bad format: ' + q.questionText);
+          const a = parseFloat(m[1]);
+          const b = parseFloat(m[2]);
+          const expected = a < b ? -1 : a > b ? 1 : 0;
+          assert(q.answer === expected,
+            q.questionText + ': generator says ' + q.answer + ', math says ' + expected);
+        }
+      });
+
+      test('genCompare produces equal-value trap pairs (0.4 vs 0.40) regularly', () => {
+        let equalCount = 0;
+        for (let i = 0; i < 400; i++) {
+          if (K.gen.compare().answer === 0) equalCount++;
+        }
+        // 4 styles, 1 of which always produces equal → expect ~25% with some variance
+        assert(equalCount >= 40, 'equal cases too rare: ' + equalCount + '/400 — trap pairs may be broken');
+      });
+
+      test('genCompare leading-zero-trap style is well-formed', () => {
+        // 0.07 vs 0.7 — sample enough that we hit this style
+        let leadingTrapSeen = 0;
+        for (let i = 0; i < 800; i++) {
+          const q = K.gen.compare();
+          if (/0\.0\d ☐ 0\.\d$/.test(q.questionText) || /0\.\d ☐ 0\.0\d$/.test(q.questionText)) {
+            leadingTrapSeen++;
+            // For this style the answer is never 0 (0.07 ≠ 0.7)
+            assert(q.answer !== 0, 'leading-zero pair claimed equal: ' + q.questionText);
+          }
+        }
+        assert(leadingTrapSeen >= 40, 'leading-zero trap too rare: ' + leadingTrapSeen + '/800');
+      });
+
+      // ------ rand ------
+      test('rand(min, max) stays within bounds', () => {
+        for (let i = 0; i < 500; i++) {
+          const r = K.rand(3, 7);
+          assert(Number.isInteger(r) && r >= 3 && r <= 7, 'out of bounds: ' + r);
+        }
+      });
+
+      test('rand(min, max) hits both endpoints over enough samples', () => {
+        const seen = new Set();
+        for (let i = 0; i < 1000; i++) seen.add(K.rand(0, 4));
+        assert(seen.has(0) && seen.has(4), 'endpoints never sampled: ' + [...seen]);
+      });
+
+      // ------ DECIMAL_MODULES ------
+      test('DECIMAL_MODULES has at least 11 curriculum entries', () => {
+        assert(Array.isArray(K.DECIMAL_MODULES), 'not an array');
+        assert(K.DECIMAL_MODULES.length >= 11, 'too few modules: ' + K.DECIMAL_MODULES.length);
+      });
+
+      test('DECIMAL_MODULES first two entries (P1.1, compare) have enter() functions', () => {
+        const p11 = K.DECIMAL_MODULES.find(m => m.key === 'p1-1');
+        const cmp = K.DECIMAL_MODULES.find(m => m.key === 'compare');
+        assert(p11 && typeof p11.enter === 'function', 'p1-1 missing enter()');
+        assert(cmp && typeof cmp.enter === 'function', 'compare missing enter()');
+      });
+
+      finish();
+    }
+
+    function finish() {
+      const failed = results.filter(r => !r.ok);
+      if (failed.length === 0) {
+        document.title = 'PASS';
+        summary.className = 'summary-pass';
+        summary.innerHTML = '<h2 class="pass">PASS — ' + results.length + ' tests</h2>';
+      } else {
+        document.title = 'FAIL: ' + failed.map(r => r.name).join('; ').slice(0, 200);
+        summary.className = 'summary-fail';
+        summary.innerHTML = '<h2 class="fail">FAIL — ' + failed.length + ' of ' + results.length + ' tests failed</h2>';
+      }
+    }
+
+    // Wait for iframe to fully boot index.html, then run.
+    document.getElementById('app').addEventListener('load', () => {
+      // Tiny delay to let __kaflon attach in the iframe's main script tail.
+      setTimeout(runTests, 100);
+    });
+
+    // Hard timeout in case the iframe never fires `load`.
+    setTimeout(() => {
+      if (document.title === 'Kaflon Tests') {
+        record('iframe loaded within 15s', false, 'timed out');
+        finish();
+      }
+    }, 15000);
+  </script>
+
+</body>
+</html>

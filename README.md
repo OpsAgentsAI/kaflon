@@ -42,6 +42,12 @@ Open an issue or PR. Especially welcome:
 - Accessibility improvements
 - Bug reports from real kids
 
+### Running tests
+
+The math generators have a pure-browser test suite at `tests.html`. To run it locally, just open `tests.html` in your browser — no `npm install`, no dev server, no build step. It loads `index.html` in a hidden iframe and asserts against `window.__kaflon`.
+
+On every PR, GitHub Actions runs the same `tests.html` headlessly via Chromium and blocks merge on failure (`.github/workflows/test.yml`). If you add a new drill module, add a test case to `tests.html` so a future refactor can't silently break your generator.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
