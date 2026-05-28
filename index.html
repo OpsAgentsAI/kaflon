@@ -76,10 +76,13 @@
           <button data-mode="multiply" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition math">×</button>
           <button data-mode="divide" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-3xl active:scale-95 transition math">÷</button>
           <button data-mode="mixed" class="mode-btn px-3 py-4 rounded-2xl bg-indigo-50 font-black text-2xl active:scale-95 transition math">×÷</button>
+          <button data-mode="squares" class="mode-btn px-2 py-4 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="squares">ריבועים</button>
+          <button data-mode="doubles" class="mode-btn px-2 py-4 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="doubles">כפל ב-2</button>
+          <button data-mode="halves" class="mode-btn px-2 py-4 rounded-2xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="halves">חצאים</button>
         </div>
       </div>
 
-      <div>
+      <div id="difficulty-row">
         <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="difficulty">רמת קושי</label>
         <div class="grid grid-cols-2 gap-2">
           <button data-diff="single" class="diff-btn px-3 py-3 rounded-2xl bg-purple-50 font-bold active:scale-95 transition" data-i18n="single-table">לוח אחד</button>
@@ -90,6 +93,14 @@
       <div id="table-picker" class="hidden">
         <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="pick-table">בחרו לוח</label>
         <div id="table-picker-grid" class="grid grid-cols-5 gap-2"></div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-bold mb-3 text-slate-500 uppercase tracking-wider" data-i18n="sound">צלילים 🔔</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="sound-off-btn" class="sound-btn px-3 py-3 rounded-2xl bg-slate-100 font-bold active:scale-95 transition" data-i18n="off">כבוי</button>
+          <button id="sound-on-btn" class="sound-btn px-3 py-3 rounded-2xl bg-slate-100 font-bold active:scale-95 transition" data-i18n="on">פעיל</button>
+        </div>
       </div>
 
       <button id="start-btn" class="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black text-xl shadow-lg active:scale-95 hover:shadow-xl transition" data-i18n="start">
@@ -187,7 +198,13 @@
         'pick-drill': "What are we practicing today?",
         'decimals-blurb': 'Decimals track — coming soon!',
         'coming-soon': 'coming soon',
-        'switch-profile': 'Switch profile'
+        'switch-profile': 'Switch profile',
+        squares: 'Squares',
+        doubles: 'Doubles',
+        halves: 'Halves',
+        sound: 'Sound',
+        on: 'On',
+        off: 'Off'
       },
       he: {
         mode: 'מצב',
@@ -215,7 +232,13 @@
         'pick-drill': 'איזה תרגיל היום?',
         'decimals-blurb': 'מסלול שברים עשרוניים — מתחילים בקרוב!',
         'coming-soon': 'בקרוב',
-        'switch-profile': 'החלף פרופיל'
+        'switch-profile': 'החלף פרופיל',
+        squares: 'ריבועים',
+        doubles: 'כפל ב-2',
+        halves: 'חצאים',
+        sound: 'צלילים',
+        on: 'פעיל',
+        off: 'כבוי'
       }
     };
 
@@ -405,17 +428,85 @@
       score: 0,
       streak: 0,
       best: 0,
+      soundOn: false,
       current: null
     };
 
     function bestKey() {
       return `kaflon.profiles.${activeProfileId}.best`;
     }
+    function soundKey() {
+      return `kaflon.profiles.${activeProfileId}.sound`;
+    }
     function loadBestForActive() {
       state.best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+      state.soundOn = localStorage.getItem(soundKey()) === 'on';
+      applySoundButtons();
     }
 
+    // ---------- audio (Web Audio API, no mp3 assets) ----------
+    let audioCtx = null;
+    function ensureAudioCtx() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+    function tone(freq, startOffset, duration, peakGain) {
+      const ctx = audioCtx;
+      const now = ctx.currentTime;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, now + startOffset);
+      g.gain.linearRampToValueAtTime(peakGain, now + startOffset + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now + startOffset + duration);
+      o.start(now + startOffset);
+      o.stop(now + startOffset + duration);
+    }
+    function playCorrect() {
+      if (!state.soundOn) return;
+      if (!ensureAudioCtx()) return;
+      tone(523.25, 0, 0.18, 0.15);     // C5
+      tone(659.25, 0.10, 0.20, 0.15);  // E5
+    }
+    function playWrong() {
+      if (!state.soundOn) return;
+      if (!ensureAudioCtx()) return;
+      tone(196.0, 0, 0.30, 0.12);      // G3 gentle low
+    }
+
+    function applySoundButtons() {
+      const on = document.getElementById('sound-on-btn');
+      const off = document.getElementById('sound-off-btn');
+      if (!on || !off) return;
+      [on, off].forEach(b => {
+        b.classList.remove('bg-purple-600', 'text-white', 'shadow-md');
+        b.classList.add('bg-slate-100');
+      });
+      const target = state.soundOn ? on : off;
+      target.classList.remove('bg-slate-100');
+      target.classList.add('bg-purple-600', 'text-white', 'shadow-md');
+    }
+    document.getElementById('sound-on-btn').addEventListener('click', () => {
+      state.soundOn = true;
+      if (activeProfileId) localStorage.setItem(soundKey(), 'on');
+      applySoundButtons();
+      ensureAudioCtx(); // unlock context with user gesture
+    });
+    document.getElementById('sound-off-btn').addEventListener('click', () => {
+      state.soundOn = false;
+      if (activeProfileId) localStorage.setItem(soundKey(), 'off');
+      applySoundButtons();
+    });
+    applySoundButtons();
+
     // ---------- mode buttons ----------
+    const SHAPED_MODES = new Set(['squares', 'doubles', 'halves']);
     function selectMode(el) {
       document.querySelectorAll('.mode-btn').forEach(x => {
         x.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
@@ -424,6 +515,11 @@
       el.classList.remove('bg-indigo-50');
       el.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
       state.mode = el.dataset.mode;
+      // Shaped modes have their own fixed shape — hide the multiply/divide knobs
+      const isShaped = SHAPED_MODES.has(state.mode);
+      document.getElementById('difficulty-row').classList.toggle('hidden', isShaped);
+      if (isShaped) document.getElementById('table-picker').classList.add('hidden');
+      else if (state.diff === 'single') document.getElementById('table-picker').classList.remove('hidden');
     }
     document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => selectMode(b)));
     selectMode(document.querySelector('[data-mode="multiply"]'));
@@ -465,27 +561,29 @@
     function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
     function nextQuestion() {
-      let op;
-      if (state.mode === 'mixed') op = Math.random() < 0.5 ? '×' : '÷';
-      else op = state.mode === 'multiply' ? '×' : '÷';
-
-      let a, b;
-      if (state.diff === 'single') {
-        a = state.table;
-        b = rand(1, 10);
-      } else {
-        a = rand(1, 10);
-        b = rand(1, 10);
-      }
-
       let questionText, answer;
-      if (op === '×') {
-        questionText = `${a} × ${b}`;
-        answer = a * b;
+
+      if (state.mode === 'squares') {
+        const n = rand(2, 10);
+        questionText = `${n} × ${n}`;
+        answer = n * n;
+      } else if (state.mode === 'doubles') {
+        const n = rand(1, 20);
+        questionText = `${n} × 2`;
+        answer = n * 2;
+      } else if (state.mode === 'halves') {
+        const n = rand(1, 20);
+        questionText = `${n * 2} ÷ 2`;
+        answer = n;
       } else {
-        // division: present (a*b) ÷ b = a so answers are always whole numbers
-        questionText = `${a * b} ÷ ${b}`;
-        answer = a;
+        let op;
+        if (state.mode === 'mixed') op = Math.random() < 0.5 ? '×' : '÷';
+        else op = state.mode === 'multiply' ? '×' : '÷';
+        let a, b;
+        if (state.diff === 'single') { a = state.table; b = rand(1, 10); }
+        else { a = rand(1, 10); b = rand(1, 10); }
+        if (op === '×') { questionText = `${a} × ${b}`; answer = a * b; }
+        else { questionText = `${a * b} ÷ ${b}`; answer = a; } // (a*b) ÷ b = a → always whole
       }
 
       state.current = { questionText, answer };
@@ -530,6 +628,7 @@
       const fb = document.getElementById('feedback');
 
       if (v === state.current.answer) {
+        playCorrect();
         state.score++;
         state.streak++;
         if (state.streak > state.best) {
@@ -551,6 +650,7 @@
           nextQuestion();
         }, 700);
       } else {
+        playWrong();
         state.streak = 0;
         document.getElementById('streak').textContent = '0';
         document.getElementById('streak-emoji').textContent = '🔥';
