@@ -308,6 +308,103 @@
                'tolerance wrong: ' + K.NL_TOLERANCE);
       });
 
+      // ------ Fractions (Libby track, card ODiDxsdh) ------
+      test('FRACTIONS_MODULES exposes add-sub, mul-div, compare', () => {
+        const keys = K.FRACTIONS_MODULES.map(m => m.key).sort().join(',');
+        assert(keys === 'add-sub,compare,mul-div', 'wrong keys: ' + keys);
+        K.FRACTIONS_MODULES.forEach(m => {
+          assert(typeof m.enter === 'function', m.key + ' has no enter()');
+          assert(typeof m.tutorialKey === 'string' && m.tutorialKey.startsWith('tut-'),
+            m.key + ' missing tutorialKey');
+        });
+      });
+
+      test('FRAC_MAX is 20 per card spec', () => {
+        assert(K.FRAC_MAX === 20, 'FRAC_MAX drifted: ' + K.FRAC_MAX);
+      });
+
+      test('gcd basic correctness', () => {
+        assert(K.gcd(12, 8) === 4, 'gcd(12,8) != 4');
+        assert(K.gcd(7, 3) === 1, 'gcd(7,3) != 1');
+        assert(K.gcd(0, 5) === 5, 'gcd(0,5) != 5');
+      });
+
+      test('simplifyFrac reduces by gcd and normalizes sign', () => {
+        const s = K.simplifyFrac(8, 12);
+        assert(s.n === 2 && s.d === 3, '8/12 -> ' + s.n + '/' + s.d);
+        const neg = K.simplifyFrac(6, -9);
+        assert(neg.n === -2 && neg.d === 3, '6/-9 -> ' + neg.n + '/' + neg.d);
+      });
+
+      // genFracAddSub
+      test('genFracAddSub operands within [1, FRAC_MAX]', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fracAddSub();
+          [q.a.n, q.a.d, q.b.n, q.b.d].forEach(v => {
+            assert(Number.isInteger(v) && v >= 1 && v <= K.FRAC_MAX,
+              'out of range: ' + v + ' in ' + q.questionText);
+          });
+        }
+      });
+
+      test('genFracAddSub math correctness (cross-multiply against derived answer)', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fracAddSub();
+          const rawN = q.op === '+' ? q.a.n * q.b.d + q.b.n * q.a.d
+                                    : q.a.n * q.b.d - q.b.n * q.a.d;
+          const rawD = q.a.d * q.b.d;
+          // q.answer is simplified; rawN/rawD ≡ q.answer.n/q.answer.d
+          assert(rawN * q.answer.d === rawD * q.answer.n,
+            'wrong math: ' + q.questionText + ' answer ' + q.answer.n + '/' + q.answer.d);
+        }
+      });
+
+      test('genFracAddSub subtraction stays non-negative (kid-friendly)', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fracAddSub();
+          if (q.op !== '-') continue;
+          assert(q.answer.n >= 0,
+            'negative subtraction answer: ' + q.questionText + ' -> ' + q.answer.n + '/' + q.answer.d);
+        }
+      });
+
+      // genFracMulDiv
+      test('genFracMulDiv math correctness', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fracMulDiv();
+          const rawN = q.op === '×' ? q.a.n * q.b.n : q.a.n * q.b.d;
+          const rawD = q.op === '×' ? q.a.d * q.b.d : q.a.d * q.b.n;
+          assert(rawN * q.answer.d === rawD * q.answer.n,
+            'wrong math: ' + q.questionText);
+        }
+      });
+
+      test('genFracMulDiv samples both directions', () => {
+        const ops = new Set();
+        for (let i = 0; i < 100; i++) ops.add(K.gen.fracMulDiv().op);
+        assert(ops.has('×') && ops.has('÷'), 'one op never sampled: ' + [...ops]);
+      });
+
+      test('genFracMulDiv answer is always simplified', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.fracMulDiv();
+          assert(K.gcd(Math.abs(q.answer.n), q.answer.d) === 1,
+            'not simplified: ' + q.answer.n + '/' + q.answer.d);
+        }
+      });
+
+      // genFracCompare
+      test('genFracCompare answer in {-1, 0, 1} and matches cross-multiply', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fracCompare();
+          assert([-1, 0, 1].includes(q.answer), 'bad answer: ' + q.answer);
+          const left = q.a.n * q.b.d, right = q.b.n * q.a.d;
+          const expected = left < right ? -1 : left > right ? 1 : 0;
+          assert(q.answer === expected,
+            q.questionText + ': generator says ' + q.answer + ', math says ' + expected);
+        }
+      });
+
       finish();
     }
 

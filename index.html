@@ -60,6 +60,11 @@
           <button data-gender="f" class="gender-btn py-3 rounded-xl bg-pink-50 font-bold active:scale-95 transition" data-i18n="girl">בת</button>
           <button data-gender="m" class="gender-btn py-3 rounded-xl bg-blue-50 font-bold active:scale-95 transition" data-i18n="boy">בן</button>
         </div>
+        <div class="grid grid-cols-3 gap-2">
+          <button data-track="multiply-divide" class="track-btn py-3 rounded-xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="track-mul-div">כפל וחילוק</button>
+          <button data-track="decimals" class="track-btn py-3 rounded-xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="track-decimals">עשרוניים</button>
+          <button data-track="fractions" class="track-btn py-3 rounded-xl bg-indigo-50 font-bold text-sm active:scale-95 transition" data-i18n="track-fractions">שברים</button>
+        </div>
         <div class="grid grid-cols-2 gap-2">
           <button id="confirm-add-profile" class="py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition" data-i18n="save">שמור</button>
           <button id="cancel-add-profile" class="py-3 bg-slate-100 rounded-xl font-bold active:scale-95 transition" data-i18n="cancel">ביטול</button>
@@ -123,6 +128,56 @@
         <p class="text-sm text-slate-500 mt-1" data-i18n="decimals-blurb">מסלול שברים עשרוניים — מתחילים בקרוב!</p>
       </div>
       <div class="space-y-2" id="decimals-modules"></div>
+    </section>
+
+    <!-- LIBBY / FRACTIONS — curriculum menu (v0.7) -->
+    <section id="fractions-menu" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
+      <div>
+        <h2 class="text-2xl font-black" data-i18n="pick-drill">איזה תרגיל היום?</h2>
+        <p class="text-sm text-slate-500 mt-1" data-i18n="fractions-blurb">מסלול שברים (לא עשרוניים) — מונים ומכנים עד 20</p>
+      </div>
+      <div class="space-y-2" id="fractions-modules"></div>
+    </section>
+
+    <!-- FRACTIONS DRILL — shared by add-sub, mul-div, compare -->
+    <section id="fractions-drill" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="flex justify-between text-base">
+        <div class="bg-pink-50 rounded-full px-4 py-2">
+          <span data-i18n="score">ניקוד</span>: <span id="f-score" class="font-black text-pink-600">0</span>
+        </div>
+        <div class="bg-orange-50 rounded-full px-4 py-2">
+          <span data-i18n="streak">רצף</span>: <span id="f-streak" class="font-black text-orange-600">0</span> <span id="f-streak-emoji">🔥</span>
+        </div>
+      </div>
+
+      <div id="f-tutorial" class="hidden bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 space-y-2">
+        <p id="f-tutorial-text" class="text-sm font-bold text-slate-800"></p>
+        <button id="f-tutorial-dismiss" class="text-xs underline text-amber-700 active:scale-95" data-i18n="hide-tutorial">הסתר הסבר</button>
+      </div>
+
+      <div class="bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl py-6 px-4 select-none">
+        <div id="f-question" class="math text-3xl sm:text-4xl font-black text-center" style="direction:ltr;">…</div>
+      </div>
+
+      <!-- Fraction answer input (numerator + denominator) -->
+      <div id="f-fraction-row" class="space-y-3">
+        <div class="flex flex-col items-center gap-2 max-w-xs mx-auto">
+          <input id="f-num" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-32 text-4xl text-center py-3 border-4 border-pink-200 rounded-2xl focus:border-pink-500 outline-none font-black" placeholder="?">
+          <div class="h-1 w-32 bg-slate-800 rounded"></div>
+          <input id="f-den" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-32 text-4xl text-center py-3 border-4 border-pink-200 rounded-2xl focus:border-pink-500 outline-none font-black" placeholder="?">
+        </div>
+        <button id="f-fraction-submit" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
+      </div>
+
+      <!-- Compare-buttons answer row -->
+      <div id="f-compare-row" class="hidden grid grid-cols-3 gap-2">
+        <button data-fchoice="-1" class="f-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">&lt;</button>
+        <button data-fchoice="0" class="f-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">=</button>
+        <button data-fchoice="1" class="f-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">&gt;</button>
+      </div>
+
+      <button id="f-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
+      <div id="f-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
 
     <!-- GAME -->
@@ -357,7 +412,19 @@
         'tier-3': 'Tier 3',
         'mul-dec-hint': '💡 Count the digits after the dot in BOTH numbers — the answer has the same total of digits after the dot.',
         'numberline-prompt': 'Tap where {value} goes',
-        'numberline-try-again': 'Tap → for the next one'
+        'numberline-try-again': 'Tap → for the next one',
+        'track-mul-div': 'Mul ÷',
+        'track-decimals': 'Decimals',
+        'track-fractions': 'Fractions',
+        'fractions-blurb': 'Fractions (no decimals) — numerators & denominators up to 20',
+        'frac-add-sub': 'Add + Subtract',
+        'frac-mul-div': 'Multiply + Divide',
+        'frac-compare': 'Compare',
+        'hide-tutorial': 'Hide explanation',
+        'tut-add-sub': '💡 Same denominator → add/subtract the numerators, keep the denominator. Different denominator → find a common denominator first (multiply each fraction so the bottoms match).',
+        'tut-mul': '💡 Multiplication: numerator × numerator, denominator × denominator. So 2/3 × 4/5 = 8/15.',
+        'tut-div': '💡 Division: flip the second fraction and multiply. So 2/3 ÷ 4/5 = 2/3 × 5/4 = 10/12.',
+        'tut-compare': '💡 Compare fractions by cross-multiplying: 2/3 vs 3/4 → 2×4 vs 3×3 → 8 vs 9 → 2/3 < 3/4.'
       },
       he: {
         mode: 'מצב',
@@ -409,7 +476,19 @@
         'tier-3': 'רמה 3',
         'mul-dec-hint': '💡 ספרו את הספרות אחרי הנקודה בשני המספרים — לתשובה אותו מספר של ספרות אחרי הנקודה.',
         'numberline-prompt': 'לחצי איפה {value}',
-        'numberline-try-again': 'לחצי → לשאלה הבאה'
+        'numberline-try-again': 'לחצי → לשאלה הבאה',
+        'track-mul-div': 'כפל וחילוק',
+        'track-decimals': 'עשרוניים',
+        'track-fractions': 'שברים',
+        'fractions-blurb': 'מסלול שברים (לא עשרוניים) — מונים ומכנים עד 20',
+        'frac-add-sub': 'חיבור וחיסור',
+        'frac-mul-div': 'כפל וחילוק',
+        'frac-compare': 'השוואה',
+        'hide-tutorial': 'הסתר הסבר',
+        'tut-add-sub': '💡 מכנה משותף → מחברים/מחסרים את המונים, המכנה נשאר. מכנה שונה → קודם מוצאים מכנה משותף (כופלים כל שבר כך שהמכנים יהיו שווים).',
+        'tut-mul': '💡 כפל: מונה × מונה, מכנה × מכנה. למשל 2/3 × 4/5 = 8/15.',
+        'tut-div': '💡 חילוק: הופכים את השבר השני וכופלים. למשל 2/3 ÷ 4/5 = 2/3 × 5/4 = 10/12.',
+        'tut-compare': '💡 משווים שברים בכפל צולב: 2/3 מול 3/4 → 2×4 מול 3×3 → 8 מול 9 → 2/3 < 3/4.'
       }
     };
 
@@ -428,6 +507,7 @@
       renderProfileChip();
       renderProfileGrid();
       renderDecimalsMenu();
+      if (document.getElementById('fractions-modules')) renderFractionsMenu();
     }
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
@@ -464,7 +544,7 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill'].forEach(s => {
+      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'fractions-menu', 'fractions-drill'].forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.toggle('hidden', s !== id);
       });
@@ -482,6 +562,9 @@
       renderProfileChip();
       if (p.track === 'decimals') {
         showScreen('decimals-menu');
+      } else if (p.track === 'fractions') {
+        renderFractionsMenu();
+        showScreen('fractions-menu');
       } else {
         // multiply-divide is the default
         loadBestForActive();
@@ -562,6 +645,7 @@
 
     // ---------- add-profile flow ----------
     let newProfileGender = 'f';
+    let newProfileTrack = 'multiply-divide';
     document.getElementById('add-profile-btn').addEventListener('click', () => {
       document.getElementById('add-profile-form').classList.remove('hidden');
       document.getElementById('new-profile-name').focus();
@@ -582,18 +666,31 @@
         newProfileGender = btn.dataset.gender;
       });
     });
+    document.querySelectorAll('.track-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.track-btn').forEach(b => {
+          b.classList.remove('bg-indigo-600', 'text-white');
+          b.classList.add('bg-indigo-50');
+        });
+        btn.classList.remove('bg-indigo-50');
+        btn.classList.add('bg-indigo-600', 'text-white');
+        newProfileTrack = btn.dataset.track;
+      });
+    });
     // default selection
     document.querySelector('.gender-btn[data-gender="f"]').click();
+    document.querySelector('.track-btn[data-track="multiply-divide"]').click();
 
     document.getElementById('confirm-add-profile').addEventListener('click', () => {
       const name = document.getElementById('new-profile-name').value.trim();
       if (!name) return;
       const id = 'k_' + Date.now().toString(36);
-      // new profiles default to multiply-divide track — they can graduate to decimals later
-      profiles.push({ id, name: { he: name, en: name }, gender: newProfileGender, track: 'multiply-divide' });
+      profiles.push({ id, name: { he: name, en: name }, gender: newProfileGender, track: newProfileTrack });
       saveProfiles();
       document.getElementById('new-profile-name').value = '';
       document.getElementById('add-profile-form').classList.add('hidden');
+      newProfileTrack = 'multiply-divide';
+      document.querySelector('.track-btn[data-track="multiply-divide"]').click();
       renderProfileGrid();
     });
 
@@ -1793,6 +1890,237 @@
       showScreen('decimals-menu');
     });
 
+    // ---------- fractions (Libby track, v0.7) ----------
+    // Curriculum: add-sub, mul-div, compare. Numerators + denominators ≤ 20.
+    // Each module ships with a kid-grade tutorial that's hidden after read.
+    // Equivalence checking: cross-multiply (so 2/4 == 1/2 == correct).
+    const FRACTIONS_MODULES = [
+      { key: 'add-sub',  nameKey: 'frac-add-sub',  tutorialKey: 'tut-add-sub', answerKind: 'fraction', enter: enterFracAddSub },
+      { key: 'mul-div',  nameKey: 'frac-mul-div',  tutorialKey: 'tut-mul',     answerKind: 'fraction', enter: enterFracMulDiv },
+      { key: 'compare',  nameKey: 'frac-compare',  tutorialKey: 'tut-compare', answerKind: 'choice',   enter: enterFracCompare }
+    ];
+
+    const FRAC_MAX = 20;
+    const fState = {
+      activeModule: 'add-sub',
+      answerKind: 'fraction',
+      current: null,
+      score: 0,
+      streak: 0,
+      tutorialDismissed: {} // per-module key
+    };
+
+    function gcd(a, b) {
+      a = Math.abs(a); b = Math.abs(b);
+      while (b) { const t = b; b = a % b; a = t; }
+      return a || 1;
+    }
+    function simplifyFrac(n, d) {
+      if (d < 0) { n = -n; d = -d; }
+      const g = gcd(Math.abs(n), Math.abs(d));
+      return { n: n / g, d: d / g };
+    }
+    function randFracPart() { return rand(1, FRAC_MAX); }
+
+    // Generator: add + subtract fractions. Mixed same-denom and diff-denom.
+    function genFracAddSub() {
+      const op = Math.random() < 0.5 ? '+' : '-';
+      const sameDen = Math.random() < 0.35;
+      let an, ad, bn, bd;
+      if (sameDen) {
+        ad = randFracPart();
+        bd = ad;
+        an = randFracPart();
+        bn = randFracPart();
+      } else {
+        an = randFracPart();
+        ad = randFracPart();
+        bn = randFracPart();
+        bd = randFracPart();
+        if (bd === ad) bd = (bd % FRAC_MAX) + 1; // force different
+      }
+      // For subtraction prefer non-negative result; if a < b, swap so kid stays in positives.
+      if (op === '-' && an * bd < bn * ad) {
+        [an, bn] = [bn, an];
+        [ad, bd] = [bd, ad];
+      }
+      const rawN = op === '+' ? an * bd + bn * ad : an * bd - bn * ad;
+      const rawD = ad * bd;
+      const answer = simplifyFrac(rawN, rawD);
+      return {
+        questionText: `${an}/${ad} ${op} ${bn}/${bd} = ?/?`,
+        a: { n: an, d: ad }, b: { n: bn, d: bd }, op,
+        answer,
+        kind: 'frac-add-sub'
+      };
+    }
+
+    // Generator: multiply + divide. Each direction picked uniformly.
+    function genFracMulDiv() {
+      const op = Math.random() < 0.5 ? '×' : '÷';
+      const an = randFracPart(), ad = randFracPart();
+      const bn = randFracPart(), bd = randFracPart();
+      let rawN, rawD;
+      if (op === '×') {
+        rawN = an * bn; rawD = ad * bd;
+      } else {
+        // a ÷ b = a × (1/b) = (an/ad) × (bd/bn)
+        rawN = an * bd; rawD = ad * bn;
+      }
+      const answer = simplifyFrac(rawN, rawD);
+      return {
+        questionText: `${an}/${ad} ${op} ${bn}/${bd} = ?/?`,
+        a: { n: an, d: ad }, b: { n: bn, d: bd }, op,
+        answer,
+        kind: 'frac-mul-div'
+      };
+    }
+
+    // Generator: compare. Cross-multiply gold standard. answer ∈ {-1, 0, 1}.
+    function genFracCompare() {
+      const an = randFracPart(), ad = randFracPart();
+      const bn = randFracPart(), bd = randFracPart();
+      const left = an * bd, right = bn * ad;
+      const answer = left < right ? -1 : left > right ? 1 : 0;
+      return {
+        questionText: `${an}/${ad} ☐ ${bn}/${bd}`,
+        a: { n: an, d: ad }, b: { n: bn, d: bd },
+        answer,
+        kind: 'frac-compare'
+      };
+    }
+
+    function renderFractionsMenu() {
+      const list = document.getElementById('fractions-modules');
+      list.innerHTML = '';
+      FRACTIONS_MODULES.forEach(m => {
+        const row = document.createElement('button');
+        row.className = 'w-full py-4 px-4 bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
+        const label = document.createElement('span');
+        label.textContent = i18n[lang][m.nameKey] || m.key;
+        const tag = document.createElement('span');
+        tag.className = 'text-lg';
+        tag.textContent = '▸';
+        row.appendChild(label);
+        row.appendChild(tag);
+        row.addEventListener('click', () => m.enter());
+        list.appendChild(row);
+      });
+    }
+
+    function applyFractionsDrillUI() {
+      document.getElementById('f-fraction-row').classList.toggle('hidden', fState.answerKind !== 'fraction');
+      document.getElementById('f-compare-row').classList.toggle('hidden', fState.answerKind !== 'choice');
+      // tutorial banner
+      const mod = FRACTIONS_MODULES.find(m => m.key === fState.activeModule);
+      const tutEl = document.getElementById('f-tutorial');
+      const dismissed = fState.tutorialDismissed[fState.activeModule];
+      if (mod && !dismissed) {
+        document.getElementById('f-tutorial-text').textContent = i18n[lang][mod.tutorialKey] || '';
+        tutEl.classList.remove('hidden');
+      } else {
+        tutEl.classList.add('hidden');
+      }
+    }
+
+    function resetFractionsScores() {
+      fState.score = 0;
+      fState.streak = 0;
+      document.getElementById('f-score').textContent = '0';
+      document.getElementById('f-streak').textContent = '0';
+      document.getElementById('f-streak-emoji').textContent = '🔥';
+    }
+
+    function nextFractionsQuestion() {
+      const m = fState.activeModule;
+      const q = m === 'add-sub' ? genFracAddSub() : m === 'mul-div' ? genFracMulDiv() : genFracCompare();
+      fState.current = q;
+      document.getElementById('f-question').textContent = q.questionText;
+      document.getElementById('f-num').value = '';
+      document.getElementById('f-den').value = '';
+      document.getElementById('f-feedback').textContent = '';
+      if (fState.answerKind === 'fraction') {
+        document.getElementById('f-num').focus();
+      }
+    }
+
+    function processFractionsOutcome(isCorrect) {
+      const fb = document.getElementById('f-feedback');
+      const qEl = document.getElementById('f-question');
+      if (isCorrect) {
+        playCorrect();
+        fState.score++;
+        fState.streak++;
+        document.getElementById('f-score').textContent = fState.score;
+        document.getElementById('f-streak').textContent = fState.streak;
+        document.getElementById('f-streak-emoji').textContent = streakEmoji(fState.streak);
+        qEl.classList.add('flash-correct');
+        fb.textContent = i18n[lang].correct;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-green-600';
+        setTimeout(() => { qEl.classList.remove('flash-correct'); nextFractionsQuestion(); }, 700);
+      } else {
+        playWrong();
+        fState.streak = 0;
+        document.getElementById('f-streak').textContent = '0';
+        document.getElementById('f-streak-emoji').textContent = '🔥';
+        qEl.classList.add('flash-wrong');
+        let expected;
+        if (fState.current.kind === 'frac-compare') {
+          expected = fState.current.answer < 0 ? '<' : fState.current.answer > 0 ? '>' : '=';
+        } else {
+          expected = `${fState.current.answer.n}/${fState.current.answer.d}`;
+        }
+        fb.textContent = `${i18n[lang].wrong} ${expected}`;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
+        setTimeout(() => { qEl.classList.remove('flash-wrong'); nextFractionsQuestion(); }, 1600);
+      }
+    }
+
+    function submitFractionAnswer() {
+      if (!fState.current || fState.current.kind === 'frac-compare') return;
+      const ns = document.getElementById('f-num').value.trim();
+      const ds = document.getElementById('f-den').value.trim();
+      if (ns === '' || ds === '') return;
+      const n = parseInt(ns, 10);
+      const d = parseInt(ds, 10);
+      if (isNaN(n) || isNaN(d) || d === 0) return;
+      // Equivalence via cross-multiply: n/d ≡ answer.n/answer.d  ⇔  n*answer.d === d*answer.n
+      const ans = fState.current.answer;
+      const correct = n * ans.d === d * ans.n;
+      processFractionsOutcome(correct);
+    }
+
+    function enterFracModule(key, answerKind) {
+      fState.activeModule = key;
+      fState.answerKind = answerKind;
+      resetFractionsScores();
+      applyFractionsDrillUI();
+      showScreen('fractions-drill');
+      nextFractionsQuestion();
+    }
+    function enterFracAddSub()  { enterFracModule('add-sub', 'fraction'); }
+    function enterFracMulDiv()  { enterFracModule('mul-div', 'fraction'); }
+    function enterFracCompare() { enterFracModule('compare', 'choice'); }
+
+    document.getElementById('f-fraction-submit').addEventListener('click', submitFractionAnswer);
+    ['f-num', 'f-den'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitFractionAnswer();
+      });
+    });
+    document.querySelectorAll('.f-choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!fState.current || fState.current.kind !== 'frac-compare') return;
+        const v = parseInt(btn.dataset.fchoice, 10);
+        processFractionsOutcome(v === fState.current.answer);
+      });
+    });
+    document.getElementById('f-back-btn').addEventListener('click', () => showScreen('fractions-menu'));
+    document.getElementById('f-tutorial-dismiss').addEventListener('click', () => {
+      fState.tutorialDismissed[fState.activeModule] = true;
+      document.getElementById('f-tutorial').classList.add('hidden');
+    });
+
     // ---------- testability surface ----------
     // Exposes pure generator functions for tests.html. Not used by the app
     // itself. Adds zero kilobytes to network when devtools is closed; safe
@@ -1806,11 +2134,18 @@
         percentWhole: genPercentWhole,
         percentDecimal: genPercentDecimal,
         mulDec: genMulDec,
-        numberLine: genNumberLine
+        numberLine: genNumberLine,
+        fracAddSub: genFracAddSub,
+        fracMulDiv: genFracMulDiv,
+        fracCompare: genFracCompare
       },
       rand,
       PLACES,
       DECIMAL_MODULES,
+      FRACTIONS_MODULES,
+      FRAC_MAX,
+      simplifyFrac,
+      gcd,
       // P2.2 numberline UI constants (tests assert on the tolerance contract)
       NL_TOLERANCE
     };
