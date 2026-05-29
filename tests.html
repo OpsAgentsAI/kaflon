@@ -506,6 +506,79 @@
         }
       });
 
+      // ------ Tutorial mode (M2 — card A402e946) ------
+      test('TUTORIALS covers the 5 required modules (4 Libi + Ayala compare)', () => {
+        const expected = ['libi-compare', 'libi-addsub', 'libi-multdiv', 'libi-fracpure', 'ayala-compare'];
+        expected.forEach(k => {
+          assert(K.TUTORIALS[k], 'missing tutorial: ' + k);
+        });
+      });
+
+      test('Every tutorial entry carries required fields', () => {
+        Object.entries(K.TUTORIALS).forEach(([key, t]) => {
+          assert(typeof t.emoji === 'string' && t.emoji.length > 0, key + ' missing emoji');
+          assert(typeof t.explainKey === 'string' && t.explainKey.startsWith('tut-explain-'),
+            key + ' explainKey malformed: ' + t.explainKey);
+          assert(typeof t.exampleQ === 'string' && t.exampleQ.length > 0, key + ' missing exampleQ');
+          assert(typeof t.exampleA === 'string' && t.exampleA.length > 0, key + ' missing exampleA');
+          assert(typeof t.exampleWhyKey === 'string', key + ' missing exampleWhyKey');
+          assert(typeof t.hintKey === 'string' && t.hintKey.startsWith('tut-hint-'),
+            key + ' hintKey malformed: ' + t.hintKey);
+          assert(typeof t.practiceGen === 'function', key + ' practiceGen not a function');
+          assert(['number', 'choice', 'fraction'].includes(t.practiceKind),
+            key + ' bad practiceKind: ' + t.practiceKind);
+          assert(typeof t.afterDrill === 'function', key + ' afterDrill not a function');
+        });
+      });
+
+      test('Tutorial practiceGen produces a valid question for each module', () => {
+        Object.entries(K.TUTORIALS).forEach(([key, t]) => {
+          const q = t.practiceGen();
+          assert(q && typeof q === 'object', key + ' practiceGen returned no question');
+          assert(typeof q.kind === 'string', key + ' question missing kind');
+        });
+      });
+
+      test('Tutorial state machine: enterTutorial sets step=1 + module', () => {
+        // _enterTutorial mutates internal state. Call it for each module and
+        // observe the state. We avoid screen mutations by checking _tutState.
+        Object.keys(K.TUTORIALS).forEach(key => {
+          K._enterTutorial(key);
+          assert(K._tutState.module === key, 'module not set: ' + K._tutState.module);
+          assert(K._tutState.step === 1, 'step should reset to 1, got ' + K._tutState.step);
+          assert(K._tutState.hintShown === false, 'hint should reset to hidden');
+        });
+      });
+
+      test('Tutorial state machine: goToStep advances step 1 → 2 → 3 → 4', () => {
+        K._enterTutorial('libi-compare');
+        assert(K._tutState.step === 1, 'expected step 1');
+        K._goToStep(2);
+        assert(K._tutState.step === 2, 'expected step 2 after goToStep(2)');
+        K._goToStep(3);
+        assert(K._tutState.step === 3, 'expected step 3 after goToStep(3)');
+        K._goToStep(4);
+        assert(K._tutState.step === 4, 'expected step 4 after goToStep(4)');
+      });
+
+      test('Tutorial state machine: re-entering resets step to 1', () => {
+        K._enterTutorial('libi-addsub');
+        K._goToStep(3);
+        assert(K._tutState.step === 3, 'sanity check failed');
+        K._enterTutorial('libi-multdiv');
+        assert(K._tutState.step === 1, 'step did not reset on re-entry');
+        assert(K._tutState.module === 'libi-multdiv', 'module did not switch');
+      });
+
+      test('Tutorial enterTutorial rejects unknown module key', () => {
+        // After entering a known module, attempting an unknown key should be a no-op.
+        K._enterTutorial('libi-compare');
+        const before = K._tutState.module;
+        K._enterTutorial('does-not-exist');
+        // _enterTutorial guards: TUTORIALS[unknown] is undefined → early return
+        assert(K._tutState.module === before, 'state mutated by unknown key');
+      });
+
       finish();
     }
 
