@@ -382,6 +382,130 @@
           'one direction never sampled: ' + [...dirs]);
       });
 
+      // ------ Libi M1 generators (card Mbv4Lutt) ------
+      test('LIBI_MODULES has the 4 M1 keys', () => {
+        const keys = K.LIBI_MODULES.map(m => m.key).sort().join(',');
+        assert(keys === 'addsub,compare,fracpure,multdiv', 'wrong keys: ' + keys);
+      });
+
+      // genCompareWhole
+      test('genCompareWhole operands in [0, 20] by default', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.compareWhole();
+          assert(Number.isInteger(q.a) && q.a >= 0 && q.a <= 20, 'a out: ' + q.a);
+          assert(Number.isInteger(q.b) && q.b >= 0 && q.b <= 20, 'b out: ' + q.b);
+        }
+      });
+
+      test('genCompareWhole operator matches numeric comparison', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.compareWhole();
+          const expected = q.a < q.b ? '<' : q.a > q.b ? '>' : '=';
+          assert(q.operator === expected,
+            q.a + ' vs ' + q.b + ': gen=' + q.operator + ', math=' + expected);
+        }
+      });
+
+      test('genCompareWhole honors custom min/max', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.compareWhole({ min: 5, max: 9 });
+          assert(q.a >= 5 && q.a <= 9 && q.b >= 5 && q.b <= 9,
+            'out of [5,9]: ' + q.a + ',' + q.b);
+        }
+      });
+
+      test('genCompareWhole hits all 3 operators over enough samples', () => {
+        const ops = new Set();
+        for (let i = 0; i < 500; i++) ops.add(K.gen.compareWhole({ min: 0, max: 5 }).operator);
+        assert(ops.has('<') && ops.has('>') && ops.has('='),
+          'missing operator: ' + [...ops]);
+      });
+
+      // genAddSub20
+      test('genAddSub20 stays in [0, 20] for operands AND answer', () => {
+        for (let i = 0; i < 400; i++) {
+          const q = K.gen.addsub20();
+          assert(q.a >= 0 && q.a <= 20, 'a: ' + q.a);
+          assert(q.b >= 0 && q.b <= 20, 'b: ' + q.b);
+          assert(q.answer >= 0 && q.answer <= 20, 'answer: ' + q.answer);
+          const expected = q.op === '+' ? q.a + q.b : q.a - q.b;
+          assert(q.answer === expected, q.a + q.op + q.b + ' != ' + q.answer);
+        }
+      });
+
+      test('genAddSub20 supports forced op', () => {
+        for (let i = 0; i < 50; i++) assert(K.gen.addsub20({ op: '+' }).op === '+', 'op not forced');
+        for (let i = 0; i < 50; i++) assert(K.gen.addsub20({ op: '-' }).op === '-', 'op not forced');
+      });
+
+      // genMultDiv20
+      test('genMultDiv20 multiplication: operands 2..10, product ≤ 20', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.multdiv20({ op: '×' });
+          assert(q.a >= 2 && q.a <= 10, 'a: ' + q.a);
+          assert(q.b >= 2 && q.b <= 10, 'b: ' + q.b);
+          assert(q.answer === q.a * q.b, 'wrong product');
+          assert(q.answer <= 20, 'product > 20: ' + q.answer);
+        }
+      });
+
+      test('genMultDiv20 division: never divide-by-zero, answer ∈ [2,10]', () => {
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.multdiv20({ op: '÷' });
+          assert(q.b !== 0, 'divide by zero');
+          assert(q.a % q.b === 0, 'non-integer division: ' + q.a + '/' + q.b);
+          assert(q.answer === q.a / q.b, 'wrong quotient');
+          assert(q.answer >= 2 && q.answer <= 10, 'answer out: ' + q.answer);
+        }
+      });
+
+      test('genMultDiv20 samples both ops over enough runs', () => {
+        const ops = new Set();
+        for (let i = 0; i < 100; i++) ops.add(K.gen.multdiv20().op);
+        assert(ops.has('×') && ops.has('÷'), 'op missed: ' + [...ops]);
+      });
+
+      // genFractionsPure
+      test('genFractionsPure denominators in [2,10], numerators proper', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fractionsPure();
+          assert(q.den1 >= 2 && q.den1 <= 10, 'den1: ' + q.den1);
+          assert(q.den2 >= 2 && q.den2 <= 10, 'den2: ' + q.den2);
+          assert(q.num1 >= 1 && q.num1 < q.den1, 'num1/den1 not proper');
+          assert(q.num2 >= 1 && q.num2 < q.den2, 'num2/den2 not proper');
+        }
+      });
+
+      test('genFractionsPure math correctness', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fractionsPure();
+          const rawN = q.op === '+' ? q.num1 * q.den2 + q.num2 * q.den1
+                                    : q.num1 * q.den2 - q.num2 * q.den1;
+          const rawD = q.den1 * q.den2;
+          // q.answerNum/q.answerDen ≡ rawN/rawD
+          assert(rawN * q.answerDen === rawD * q.answerNum,
+            q.num1 + '/' + q.den1 + ' ' + q.op + ' ' + q.num2 + '/' + q.den2 +
+            ' -> ' + q.answerNum + '/' + q.answerDen);
+        }
+      });
+
+      test('genFractionsPure subtraction never goes negative', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.fractionsPure({ op: '-' });
+          assert(q.answerNum >= 0, 'negative answer: ' + q.answerNum + '/' + q.answerDen);
+        }
+      });
+
+      test('genFractionsPure answer is in lowest terms', () => {
+        // gcd helper for the test (we don't expose K.gcd from this module)
+        function g(a, b) { a=Math.abs(a); b=Math.abs(b); while(b){const t=b; b=a%b; a=t;} return a||1; }
+        for (let i = 0; i < 200; i++) {
+          const q = K.gen.fractionsPure();
+          assert(g(q.answerNum, q.answerDen) === 1,
+            'not reduced: ' + q.answerNum + '/' + q.answerDen);
+        }
+      });
+
       finish();
     }
 
