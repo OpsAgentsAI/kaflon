@@ -222,6 +222,81 @@
       <div id="l-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
 
+    <!-- TUTORIAL WIZARD — shared by libi modules + ayala compare-decimals (M2) -->
+    <section id="tutorial" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <!-- step header -->
+      <div class="flex items-center justify-between text-sm font-bold text-slate-500">
+        <span id="tut-step-label" class="uppercase tracking-wider">step</span>
+        <span id="tut-step-num" class="bg-amber-100 text-amber-700 rounded-full px-3 py-1">1/4</span>
+      </div>
+
+      <!-- step 1: explanation -->
+      <div id="tut-step-explain" class="space-y-4">
+        <div class="text-7xl text-center" id="tut-emoji">💡</div>
+        <p id="tut-explain-text" class="text-lg font-bold text-slate-800 text-center leading-relaxed"></p>
+        <button id="tut-explain-next" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="tut-next">הבנתי →</button>
+      </div>
+
+      <!-- step 2: worked example -->
+      <div id="tut-step-example" class="hidden space-y-4">
+        <div class="bg-amber-50 rounded-2xl p-5 space-y-3">
+          <div class="text-sm font-bold text-amber-700 uppercase tracking-wider" data-i18n="tut-example-label">דוגמה</div>
+          <div id="tut-example-question" class="math text-3xl sm:text-4xl font-black text-center" style="direction:ltr;"></div>
+          <div class="bg-white rounded-xl p-3 space-y-2">
+            <div class="flex items-baseline gap-3">
+              <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider" data-i18n="tut-example-answer">תשובה</span>
+              <span id="tut-example-answer" class="math text-2xl font-black text-emerald-700" style="direction:ltr;"></span>
+            </div>
+            <div class="text-sm text-slate-700">
+              <span class="font-bold" data-i18n="tut-example-why">למה</span>:
+              <span id="tut-example-why" class="font-normal"></span>
+            </div>
+          </div>
+        </div>
+        <button id="tut-example-next" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="tut-next">הבנתי →</button>
+      </div>
+
+      <!-- step 3: guided practice with hint -->
+      <div id="tut-step-practice" class="hidden space-y-4">
+        <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl py-6 px-4">
+          <div id="tut-practice-question" class="math text-3xl sm:text-4xl font-black text-center" style="direction:ltr;"></div>
+        </div>
+        <!-- answer input is mode-dependent; reuse libi-drill rows under hidden wrappers -->
+        <div id="tut-practice-number" class="space-y-3">
+          <input id="tut-practice-answer" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-full text-4xl text-center py-4 border-4 border-amber-200 rounded-2xl focus:border-amber-500 outline-none font-black" placeholder="?">
+          <button id="tut-practice-submit" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
+        </div>
+        <div id="tut-practice-choice" class="hidden grid grid-cols-3 gap-2">
+          <button data-tutchoice="-1" class="tut-choice-btn math py-5 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-4xl active:scale-95 transition">&lt;</button>
+          <button data-tutchoice="0" class="tut-choice-btn math py-5 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-4xl active:scale-95 transition">=</button>
+          <button data-tutchoice="1" class="tut-choice-btn math py-5 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-4xl active:scale-95 transition">&gt;</button>
+        </div>
+        <div id="tut-practice-fraction" class="hidden space-y-3">
+          <div class="flex flex-col items-center gap-2 max-w-xs mx-auto">
+            <input id="tut-practice-num" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-28 text-3xl text-center py-2 border-4 border-amber-200 rounded-2xl focus:border-amber-500 outline-none font-black" placeholder="?">
+            <div class="h-1 w-28 bg-slate-800 rounded"></div>
+            <input id="tut-practice-den" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-28 text-3xl text-center py-2 border-4 border-amber-200 rounded-2xl focus:border-amber-500 outline-none font-black" placeholder="?">
+          </div>
+          <button id="tut-practice-frac-submit" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
+        </div>
+
+        <button id="tut-hint-btn" class="w-full py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="tut-show-hint">💡 תראי לי רמז</button>
+        <div id="tut-hint-text" class="hidden bg-amber-50 border-2 border-amber-200 rounded-2xl p-3 text-sm font-bold text-slate-800"></div>
+        <div id="tut-practice-feedback" class="text-center font-bold text-base min-h-[24px]"></div>
+      </div>
+
+      <!-- step 4: transition -->
+      <div id="tut-step-ready" class="hidden space-y-4">
+        <div class="text-7xl text-center">🎉</div>
+        <p class="text-lg font-bold text-slate-800 text-center leading-relaxed">
+          <span data-i18n="amazing">מדהים!</span>
+        </p>
+        <button id="tut-to-drill-btn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="tut-to-drill">מוכנה, מתחילים →</button>
+      </div>
+
+      <button id="tut-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
+    </section>
+
     <!-- GAME -->
     <section id="game" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
 
@@ -460,6 +535,33 @@
         'libi-addsub': '+ and − up to 20',
         'libi-multdiv': '× and ÷ tables 2–10',
         'libi-fracpure': 'Fractions: + and −',
+        'tut-mode-on': '💡 Explain mode',
+        'tut-mode-off': '▶ Just drill',
+        'tut-step-1': 'How it works',
+        'tut-step-2': 'Worked example',
+        'tut-step-3': 'You try (with hint)',
+        'tut-step-4': 'Ready, off we go',
+        'tut-next': 'Got it →',
+        'tut-show-hint': '💡 Show me a hint',
+        'tut-to-drill': "Ready, let's drill →",
+        'tut-example-label': 'Example',
+        'tut-example-answer': 'Answer',
+        'tut-example-why': 'Why',
+        'tut-explain-libi-compare': "Comparing whole numbers? Just look which one is bigger. Use the symbol that opens toward the bigger number — < means the small one is on the left, > means the big one is on the left.",
+        'tut-why-libi-compare': '7 is bigger than 4, so the opening of the symbol points to 7 — that means 7 > 4.',
+        'tut-hint-libi-compare': "Picture a hungry crocodile: its mouth opens toward the bigger snack. Which number is bigger?",
+        'tut-explain-libi-addsub': "Plus means putting groups together. Minus means taking some away. Stay between 0 and 20 — count on your fingers if you need to, that's allowed!",
+        'tut-why-libi-addsub': '8 plus 5: start at 8 and count up 5 more — 9, 10, 11, 12, 13. So the answer is 13.',
+        'tut-hint-libi-addsub': "Count up from the bigger number. If it's minus, count down. Fingers help — use them!",
+        'tut-explain-libi-multdiv': "Multiplication is adding the same number again and again. 3 × 4 means 4 + 4 + 4. Division is sharing equally — 12 ÷ 4 means split 12 into 4 equal groups.",
+        'tut-why-libi-multdiv': '3 × 4 = 4 + 4 + 4 = 12. Or: 3 groups of 4 dots arranged in a grid — count them all.',
+        'tut-hint-libi-multdiv': "Think of dots in a grid: rows × columns. Or: skip-count by the smaller number.",
+        'tut-explain-libi-fracpure': "Same bottom number? Just add or subtract the tops, keep the bottom. Different bottoms? Find a common bottom first — multiply each fraction so they match.",
+        'tut-why-libi-fracpure': "1/4 + 2/4: same bottom (4). Add the tops: 1 + 2 = 3. Bottom stays 4. Answer: 3/4.",
+        'tut-hint-libi-fracpure': "Check the bottoms first. Same? Add tops, keep bottom. Different? Multiply across to match them.",
+        'tut-explain-ayala-compare': "Decimals trick: longer doesn't mean bigger. 0.4 and 0.40 are the same — extra zeros at the end don't change value. Look at each place starting from the left.",
+        'tut-why-ayala-compare': "0.4 and 0.40 are equal because adding a zero at the right of a decimal doesn't change its size — both mean four tenths.",
+        'tut-hint-ayala-compare': "Add zeros to make both decimals the same length, then compare digit by digit from the left.",
         'geometry': 'Geometry 📐',
         'geometry-blurb': 'Shapes — area, perimeter, formulas',
         'geo-formulas-title': 'Formula sheet',
@@ -542,6 +644,33 @@
         'libi-addsub': 'חיבור וחיסור עד 20',
         'libi-multdiv': 'לוחות כפל וחילוק 2–10',
         'libi-fracpure': 'שברים: חיבור וחיסור',
+        'tut-mode-on': '💡 הסבר ותרגול',
+        'tut-mode-off': '▶ ישר לתרגול',
+        'tut-step-1': 'איך זה עובד',
+        'tut-step-2': 'דוגמה מלאה',
+        'tut-step-3': 'תורך (עם רמז)',
+        'tut-step-4': 'מוכנה, קדימה',
+        'tut-next': 'הבנתי →',
+        'tut-show-hint': '💡 תראי לי רמז',
+        'tut-to-drill': 'מוכנה, מתחילים →',
+        'tut-example-label': 'דוגמה',
+        'tut-example-answer': 'תשובה',
+        'tut-example-why': 'למה',
+        'tut-explain-libi-compare': 'משווים מספרים שלמים? פשוט בודקים איזה גדול יותר. הסימן שנפתח לכיוון המספר הגדול — < או >. אם שניהם שווים, משתמשים ב-=.',
+        'tut-why-libi-compare': '7 גדול מ-4, אז הפתח של הסימן פונה לכיוון 7 — כלומר 7 > 4.',
+        'tut-hint-libi-compare': 'תדמייני תנין רעב: הפה שלו פונה לארוחה הגדולה. איזה מספר גדול יותר?',
+        'tut-explain-libi-addsub': 'חיבור = מאחדים קבוצות. חיסור = מורידים. הכל בין 0 ל-20 — אם צריך, סופרים על האצבעות, זה מותר!',
+        'tut-why-libi-addsub': '8 + 5: מתחילים מ-8 וסופרים 5 קדימה — 9, 10, 11, 12, 13. אז התשובה היא 13.',
+        'tut-hint-libi-addsub': 'תסיפרי קדימה מהמספר הגדול. אם זה חיסור — אחורה. האצבעות עוזרות, להשתמש בהן!',
+        'tut-explain-libi-multdiv': 'כפל = מחברים את אותו מספר שוב ושוב. 3 × 4 זה 4 + 4 + 4. חילוק = מחלקים בשווה — 12 ÷ 4 זה לחלק 12 ל-4 קבוצות שוות.',
+        'tut-why-libi-multdiv': '3 × 4 = 4 + 4 + 4 = 12. או: 3 שורות של 4 נקודות, אפשר לספור הכל.',
+        'tut-hint-libi-multdiv': 'תדמייני נקודות במשבצות: שורות × עמודות. או: דלגי על המספר הקטן.',
+        'tut-explain-libi-fracpure': 'מכנה משותף? פשוט מחברים או מחסירים את המונים, המכנה נשאר. מכנים שונים? קודם מוצאים מכנה משותף — כופלים כל שבר כך שיתאימו.',
+        'tut-why-libi-fracpure': '1/4 + 2/4: אותו מכנה (4). מחברים מונים: 1 + 2 = 3. המכנה נשאר 4. תשובה: 3/4.',
+        'tut-hint-libi-fracpure': 'בדקי קודם את המכנים. אותו דבר? חברי מונים, המכנה נשאר. שונים? כפלי לרוחב כדי שיתאימו.',
+        'tut-explain-ayala-compare': 'טריק לעשרוניים: ארוך לא תמיד גדול יותר. 0.4 ו-0.40 הם אותו מספר — אפסים נוספים בסוף לא משנים. השוואה ספרה-ספרה משמאל לימין.',
+        'tut-why-ayala-compare': '0.4 ו-0.40 שווים, כי הוספת אפס בסוף שבר עשרוני לא משנה את הערך — שניהם 4 עשיריות.',
+        'tut-hint-ayala-compare': 'הוסיפי אפסים בסוף כדי שלשני המספרים יהיה אותו מספר של ספרות, ואז השווי ספרה-ספרה משמאל לימין.',
         'geometry': 'גאומטריה 📐',
         'geometry-blurb': 'צורות — שטח, היקף, נוסחאות',
         'geo-formulas-title': 'דף נוסחאות',
@@ -629,7 +758,7 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill'].forEach(s => {
+      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill', 'tutorial'].forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.toggle('hidden', s !== id);
       });
@@ -704,26 +833,48 @@
       list.innerHTML = '';
       DECIMAL_MODULES.forEach(m => {
         const isActive = typeof m.enter === 'function';
-        const row = document.createElement(isActive ? 'button' : 'div');
-        if (isActive) {
-          row.className = 'w-full py-4 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
-          row.addEventListener('click', () => m.enter());
-        } else {
+        // The compare module gets the explain-mode pair like libi modules
+        const tutKey = m.key === 'compare' && typeof TUTORIALS !== 'undefined' && TUTORIALS['ayala-compare']
+          ? 'ayala-compare' : null;
+        const row = document.createElement('div');
+        if (!isActive) {
+          // coming-soon stub stays as a single non-interactive row
           row.className = 'w-full py-3 px-4 bg-slate-50 rounded-xl flex items-center justify-between text-base opacity-70';
+          const label = document.createElement('span');
+          label.className = 'font-bold';
+          label.textContent = m[lang] || m.he;
+          const tag = document.createElement('span');
+          tag.className = 'text-xs px-2 py-1 bg-slate-200 rounded-full text-slate-600';
+          tag.textContent = i18n[lang]['coming-soon'];
+          row.appendChild(label);
+          row.appendChild(tag);
+          list.appendChild(row);
+          return;
         }
+        // active module: drill button (+ optional tutorial button on the right)
+        row.className = tutKey
+          ? 'grid grid-cols-[1fr_auto] gap-2 items-stretch'
+          : 'block';
+        const drillBtn = document.createElement('button');
+        drillBtn.className = 'w-full py-4 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
         const label = document.createElement('span');
         label.className = 'font-bold';
         label.textContent = m[lang] || m.he;
         const tag = document.createElement('span');
-        if (isActive) {
-          tag.className = 'text-lg';
-          tag.textContent = '▸';
-        } else {
-          tag.className = 'text-xs px-2 py-1 bg-slate-200 rounded-full text-slate-600';
-          tag.textContent = i18n[lang]['coming-soon'];
+        tag.className = 'text-lg';
+        tag.textContent = '▸';
+        drillBtn.appendChild(label);
+        drillBtn.appendChild(tag);
+        drillBtn.addEventListener('click', () => m.enter());
+        row.appendChild(drillBtn);
+        if (tutKey) {
+          const tutBtn = document.createElement('button');
+          tutBtn.className = 'px-3 py-4 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl font-bold text-sm active:scale-95 transition';
+          tutBtn.setAttribute('aria-label', i18n[lang]['tut-mode-on']);
+          tutBtn.textContent = '💡';
+          tutBtn.addEventListener('click', () => enterTutorial(tutKey));
+          row.appendChild(tutBtn);
         }
-        row.appendChild(label);
-        row.appendChild(tag);
         list.appendChild(row);
       });
     }
@@ -2200,16 +2351,35 @@
       const list = document.getElementById('libi-modules');
       list.innerHTML = '';
       LIBI_MODULES.forEach(m => {
-        const row = document.createElement('button');
-        row.className = 'w-full py-4 px-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
+        // Two-button row: explain-mode (left) + just-drill (right).
+        // Explain mode opens the tutorial wizard; drill jumps straight in.
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-[1fr_auto] gap-2 items-stretch';
+        const drillBtn = document.createElement('button');
+        drillBtn.className = 'py-4 px-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
         const label = document.createElement('span');
         label.textContent = i18n[lang][m.labelKey] || m.key;
         const tag = document.createElement('span');
         tag.className = 'text-lg';
         tag.textContent = '▸';
-        row.appendChild(label);
-        row.appendChild(tag);
-        row.addEventListener('click', () => enterLibiModule(m.key));
+        drillBtn.appendChild(label);
+        drillBtn.appendChild(tag);
+        drillBtn.addEventListener('click', () => enterLibiModule(m.key));
+        // Tutorial button — only if a tutorial exists for this module.
+        const tutKey = 'libi-' + m.key;
+        if (TUTORIALS[tutKey]) {
+          const tutBtn = document.createElement('button');
+          tutBtn.className = 'px-3 py-4 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl font-bold text-sm active:scale-95 transition';
+          tutBtn.setAttribute('aria-label', i18n[lang]['tut-mode-on']);
+          tutBtn.textContent = '💡';
+          tutBtn.addEventListener('click', () => enterTutorial(tutKey));
+          row.appendChild(drillBtn);
+          row.appendChild(tutBtn);
+        } else {
+          drillBtn.classList.add('w-full');
+          row.className = 'block';
+          row.appendChild(drillBtn);
+        }
         list.appendChild(row);
       });
     }
@@ -2346,6 +2516,241 @@
     });
     document.getElementById('l-back-btn').addEventListener('click', () => showScreen('libi-menu'));
 
+    // ---------- tutorial mode (M2) ----------
+    // Per-module "explain + guided practice" mode. 4-step state machine:
+    //   explain → example → practice (with hint) → ready → drill.
+    // Content for 5 modules: 4 Libi (M1) + Ayala compare-decimals.
+    //
+    // Each entry carries:
+    //   emoji        — visual at the top of the explain step
+    //   explain      — 1–2 sentence rule (kid-grade)
+    //   exampleQ     — string rendered as the worked-example question
+    //   exampleA     — string rendered as the worked-example answer
+    //   exampleWhy   — 1-line reasoning ("why this answer")
+    //   hint         — shown after a wrong practice attempt (or on demand)
+    //   practiceGen  — () => question for the guided practice (returns the
+    //                  same shape as the module's normal generator)
+    //   practiceKind — 'number' | 'choice' | 'fraction' (controls UI row)
+    //   afterDrill   — () => fn that enters the matching drill
+    const TUTORIALS = {
+      'libi-compare': {
+        emoji: '⚖️',
+        explainKey: 'tut-explain-libi-compare',
+        exampleQ: '7 ☐ 4',
+        exampleA: '>',
+        exampleWhyKey: 'tut-why-libi-compare',
+        hintKey: 'tut-hint-libi-compare',
+        practiceGen: () => genCompareWhole({ min: 0, max: 20 }),
+        practiceKind: 'choice',
+        afterDrill: () => enterLibiModule('compare')
+      },
+      'libi-addsub': {
+        emoji: '➕',
+        explainKey: 'tut-explain-libi-addsub',
+        exampleQ: '8 + 5 = ?',
+        exampleA: '13',
+        exampleWhyKey: 'tut-why-libi-addsub',
+        hintKey: 'tut-hint-libi-addsub',
+        practiceGen: () => genAddSub20({ op: '+' }),
+        practiceKind: 'number',
+        afterDrill: () => enterLibiModule('addsub')
+      },
+      'libi-multdiv': {
+        emoji: '✖️',
+        explainKey: 'tut-explain-libi-multdiv',
+        exampleQ: '3 × 4 = ?',
+        exampleA: '12',
+        exampleWhyKey: 'tut-why-libi-multdiv',
+        hintKey: 'tut-hint-libi-multdiv',
+        practiceGen: () => genMultDiv20({ op: '×' }),
+        practiceKind: 'number',
+        afterDrill: () => enterLibiModule('multdiv')
+      },
+      'libi-fracpure': {
+        emoji: '🍕',
+        explainKey: 'tut-explain-libi-fracpure',
+        exampleQ: '1/4 + 2/4 = ?/?',
+        exampleA: '3/4',
+        exampleWhyKey: 'tut-why-libi-fracpure',
+        hintKey: 'tut-hint-libi-fracpure',
+        practiceGen: () => genFractionsPure({ op: '+', denomMin: 2, denomMax: 6 }),
+        practiceKind: 'fraction',
+        afterDrill: () => enterLibiModule('fracpure')
+      },
+      'ayala-compare': {
+        emoji: '🔍',
+        explainKey: 'tut-explain-ayala-compare',
+        exampleQ: '0.4 ☐ 0.40',
+        exampleA: '=',
+        exampleWhyKey: 'tut-why-ayala-compare',
+        hintKey: 'tut-hint-ayala-compare',
+        practiceGen: () => genCompare(),
+        practiceKind: 'choice',
+        afterDrill: () => enterCompareDecimals()
+      }
+    };
+
+    const tutState = { module: null, step: 1, current: null, hintShown: false };
+
+    function renderTutorialStep() {
+      const t = TUTORIALS[tutState.module];
+      if (!t) return;
+      // step header
+      const stepKeys = ['tut-step-1', 'tut-step-2', 'tut-step-3', 'tut-step-4'];
+      document.getElementById('tut-step-label').textContent = i18n[lang][stepKeys[tutState.step - 1]] || '';
+      document.getElementById('tut-step-num').textContent = tutState.step + '/4';
+      // show only the active step container
+      ['explain', 'example', 'practice', 'ready'].forEach((s, i) => {
+        document.getElementById('tut-step-' + s).classList.toggle('hidden', tutState.step !== i + 1);
+      });
+      if (tutState.step === 1) {
+        document.getElementById('tut-emoji').textContent = t.emoji;
+        document.getElementById('tut-explain-text').textContent = i18n[lang][t.explainKey] || '';
+      } else if (tutState.step === 2) {
+        document.getElementById('tut-example-question').textContent = t.exampleQ;
+        document.getElementById('tut-example-answer').textContent = t.exampleA;
+        document.getElementById('tut-example-why').textContent = i18n[lang][t.exampleWhyKey] || '';
+      } else if (tutState.step === 3) {
+        // toggle the right input row
+        document.getElementById('tut-practice-number').classList.toggle('hidden', t.practiceKind !== 'number');
+        document.getElementById('tut-practice-choice').classList.toggle('hidden', t.practiceKind !== 'choice');
+        document.getElementById('tut-practice-fraction').classList.toggle('hidden', t.practiceKind !== 'fraction');
+        document.getElementById('tut-hint-text').classList.add('hidden');
+        document.getElementById('tut-hint-text').textContent = i18n[lang][t.hintKey] || '';
+        tutState.hintShown = false;
+        document.getElementById('tut-practice-feedback').textContent = '';
+        document.getElementById('tut-practice-answer').value = '';
+        document.getElementById('tut-practice-num').value = '';
+        document.getElementById('tut-practice-den').value = '';
+        nextTutorialPractice();
+      }
+    }
+
+    function nextTutorialPractice() {
+      const t = TUTORIALS[tutState.module];
+      const q = t.practiceGen();
+      tutState.current = q;
+      const qEl = document.getElementById('tut-practice-question');
+      if (q.kind === 'compare-whole') {
+        qEl.textContent = `${q.a} ☐ ${q.b}`;
+      } else if (q.kind === 'addsub-20' || q.kind === 'multdiv-20') {
+        qEl.textContent = `${q.a} ${q.op} ${q.b} = ?`;
+      } else if (q.kind === 'fractions-pure') {
+        qEl.innerHTML =
+          `<span style="display:inline-flex;flex-direction:column;align-items:center;font-size:0.85em;line-height:1;">` +
+            `<span>${q.num1}</span><span style="border-top:3px solid currentColor;padding-top:0.05em;">${q.den1}</span>` +
+          `</span> ${q.op} ` +
+          `<span style="display:inline-flex;flex-direction:column;align-items:center;font-size:0.85em;line-height:1;">` +
+            `<span>${q.num2}</span><span style="border-top:3px solid currentColor;padding-top:0.05em;">${q.den2}</span>` +
+          `</span> = ?/?`;
+      } else if (q.kind === 'compare') {
+        // ayala's decimal compare — answer is -1|0|1, question has ☐ embedded
+        qEl.textContent = q.questionText;
+      }
+    }
+
+    function showTutorialHint(opts) {
+      const auto = opts && opts.auto;
+      const el = document.getElementById('tut-hint-text');
+      el.classList.remove('hidden');
+      tutState.hintShown = true;
+      if (auto) {
+        document.getElementById('tut-practice-feedback').textContent = i18n[lang].wrong || '';
+        document.getElementById('tut-practice-feedback').className = 'text-center font-bold text-base min-h-[24px] text-red-600';
+      }
+    }
+
+    function tutorialPracticeOutcome(isCorrect) {
+      const fb = document.getElementById('tut-practice-feedback');
+      if (isCorrect) {
+        playCorrect();
+        fb.textContent = i18n[lang].correct;
+        fb.className = 'text-center font-bold text-base min-h-[24px] text-green-600';
+        setTimeout(() => goToStep(4), 800);
+      } else {
+        playWrong();
+        // hint auto-reveals on first miss; second miss → still allow retry but no
+        // additional hint
+        if (!tutState.hintShown) showTutorialHint({ auto: true });
+        else {
+          fb.textContent = i18n[lang].wrong || '';
+          fb.className = 'text-center font-bold text-base min-h-[24px] text-red-600';
+        }
+      }
+    }
+
+    function submitTutorialNumber() {
+      if (!tutState.current) return;
+      const raw = document.getElementById('tut-practice-answer').value.trim();
+      if (raw === '') return;
+      const v = parseInt(raw, 10);
+      if (isNaN(v)) return;
+      tutorialPracticeOutcome(v === tutState.current.answer);
+    }
+    function submitTutorialFraction() {
+      if (!tutState.current || tutState.current.kind !== 'fractions-pure') return;
+      const ns = document.getElementById('tut-practice-num').value.trim();
+      const ds = document.getElementById('tut-practice-den').value.trim();
+      if (ns === '' || ds === '') return;
+      const n = parseInt(ns, 10);
+      const d = parseInt(ds, 10);
+      if (isNaN(n) || isNaN(d) || d === 0) return;
+      const correct = n * tutState.current.answerDen === d * tutState.current.answerNum;
+      tutorialPracticeOutcome(correct);
+    }
+
+    function goToStep(step) {
+      tutState.step = step;
+      renderTutorialStep();
+    }
+
+    function enterTutorial(moduleKey) {
+      if (!TUTORIALS[moduleKey]) return;
+      tutState.module = moduleKey;
+      tutState.step = 1;
+      tutState.hintShown = false;
+      showScreen('tutorial');
+      renderTutorialStep();
+    }
+
+    document.getElementById('tut-explain-next').addEventListener('click', () => goToStep(2));
+    document.getElementById('tut-example-next').addEventListener('click', () => goToStep(3));
+    document.getElementById('tut-hint-btn').addEventListener('click', () => showTutorialHint({}));
+    document.getElementById('tut-to-drill-btn').addEventListener('click', () => {
+      const t = TUTORIALS[tutState.module];
+      if (t && t.afterDrill) t.afterDrill();
+    });
+    document.getElementById('tut-back-btn').addEventListener('click', () => {
+      // back to whichever menu owns this module
+      if (tutState.module && tutState.module.startsWith('ayala-')) showScreen('decimals-menu');
+      else showScreen('libi-menu');
+    });
+    document.getElementById('tut-practice-submit').addEventListener('click', submitTutorialNumber);
+    document.getElementById('tut-practice-answer').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitTutorialNumber();
+    });
+    document.getElementById('tut-practice-frac-submit').addEventListener('click', submitTutorialFraction);
+    ['tut-practice-num', 'tut-practice-den'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitTutorialFraction();
+      });
+    });
+    document.querySelectorAll('.tut-choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const v = parseInt(btn.dataset.tutchoice, 10);
+        const q = tutState.current;
+        if (!q) return;
+        let correct;
+        if (q.kind === 'compare-whole') {
+          const op = v === -1 ? '<' : v === 1 ? '>' : '=';
+          correct = op === q.operator;
+        } else if (q.kind === 'compare') {
+          correct = v === q.answer;
+        } else return;
+        tutorialPracticeOutcome(correct);
+      });
+    });
+
     // ---------- testability surface ----------
     // Exposes pure generator functions for tests.html. Not used by the app
     // itself. Adds zero kilobytes to network when devtools is closed; safe
@@ -2372,8 +2777,13 @@
       GEO_SHAPES,
       GEO_PI,
       LIBI_MODULES,
+      TUTORIALS,
       // P2.2 numberline UI constants (tests assert on the tolerance contract)
-      NL_TOLERANCE
+      NL_TOLERANCE,
+      // tutorial state machine internals (tests assert on transitions)
+      _tutState: tutState,
+      _goToStep: goToStep,
+      _enterTutorial: enterTutorial
     };
 
     // ---------- boot ----------
