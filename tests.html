@@ -92,11 +92,13 @@
         }
       });
 
-      test('genPlaceValue carries kind + subQuestion', () => {
+      test('genPlaceValue carries kind + placeKey for lang-agnostic rebuild', () => {
         for (let i = 0; i < 20; i++) {
           const q = K.gen.placeValue();
           assert(q.kind === 'place-value', 'bad kind: ' + q.kind);
-          assert(q.subQuestion && q.subQuestion.length > 0, 'empty subQuestion');
+          assert(['tenths', 'hundredths', 'thousandths'].includes(q.placeKey),
+            'bad placeKey: ' + q.placeKey);
+          assert(q.num && q.num.length === 5, 'bad num: ' + q.num);
         }
       });
 
@@ -217,7 +219,10 @@
           assert(q.kind === 'measurements', 'wrong kind: ' + q.kind);
           assert(typeof q.answer === 'number' && isFinite(q.answer) && q.answer > 0,
                  'bad answer: ' + q.answer);
-          assert(/= \? /.test(q.questionText), 'malformed prompt: ' + q.questionText);
+          assert(['m', 'cm', 'mm'].includes(q.fromKey) && ['m', 'cm', 'mm'].includes(q.toKey),
+            'bad fromKey/toKey: ' + q.fromKey + '/' + q.toKey);
+          const en = K.formatQuestion(q, 'en').questionText;
+          assert(/= \? /.test(en), 'malformed prompt: ' + en);
         }
       });
 
@@ -227,7 +232,7 @@
           const q = K.gen.percentWhole();
           assert(q.kind === 'percent-whole', 'wrong kind: ' + q.kind);
           assert(Number.isInteger(q.answer),
-                 'answer is not integer: ' + q.answer + ' from: ' + q.questionText);
+                 'answer is not integer: ' + q.answer + ' from p=' + q.p + ' base=' + q.base);
         }
       });
 
@@ -235,8 +240,7 @@
         const seen = new Set();
         for (let i = 0; i < 500; i++) {
           const q = K.gen.percentWhole();
-          const m = q.questionText.match(/(\d+)%/);
-          if (m) seen.add(parseInt(m[1], 10));
+          seen.add(q.p);
         }
         const allowed = new Set([10, 20, 25, 50, 75, 100]);
         for (const p of seen) {
@@ -255,6 +259,8 @@
           const scaled = Math.round(q.answer * 100);
           assert(Math.abs(scaled - q.answer * 100) < 1e-9,
                  'answer not ≤2dp: ' + q.answer);
+          assert(typeof q.p === 'number' && typeof q.baseStr === 'string',
+            'missing rebuild params p/baseStr');
         }
       });
 
@@ -370,8 +376,9 @@
       test('genCircle question text contains the radius value', () => {
         for (let i = 0; i < 100; i++) {
           const q = K.gen.circle();
-          assert(q.questionText.includes(String(q.r)),
-            'r=' + q.r + ' not in question: ' + q.questionText);
+          const en = K.formatQuestion(q, 'en').questionText;
+          assert(en.includes(String(q.r)),
+            'r=' + q.r + ' not in question: ' + en);
         }
       });
 
@@ -504,6 +511,97 @@
           assert(g(q.answerNum, q.answerDen) === 1,
             'not reduced: ' + q.answerNum + '/' + q.answerDen);
         }
+      });
+
+      // ------ formatQuestion (lGNRlF0p regression) ------
+      // The English locale used to leave the Place-value, Percent, Measurements, and
+      // Circle prompts in Hebrew because the generators pre-rendered the prose at
+      // creation time. Generators now store language-agnostic params and
+      // formatQuestion(q, lang) is the single source of truth for display strings.
+      test('formatQuestion(place-value, en) renders English prose with named place', () => {
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.placeValue();
+          const en = K.formatQuestion(q, 'en').subQuestion;
+          assert(en === 'Which digit is in the ' + q.placeKey + ' place?',
+            'EN prompt wrong: ' + en);
+          assert(!/[֐-׿]/.test(en), 'EN prompt contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(place-value, he) renders Hebrew prose with named place', () => {
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.placeValue();
+          const he = K.formatQuestion(q, 'he').subQuestion;
+          assert(/^איזו ספרה במקום ה.+\?$/.test(he), 'HE prompt wrong: ' + he);
+        }
+      });
+
+      test('formatQuestion(percent-whole, en/he) renders the percent prose in current lang', () => {
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.percentWhole();
+          const en = K.formatQuestion(q, 'en').questionText;
+          const he = K.formatQuestion(q, 'he').questionText;
+          assert(en === q.p + '% of ' + q.base + ' = ?', 'EN wrong: ' + en);
+          assert(he === 'כמה זה ' + q.p + '% מ-' + q.base + '?', 'HE wrong: ' + he);
+          assert(!/[֐-׿]/.test(en), 'EN percent-whole contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(percent-decimal, en/he) renders the percent prose in current lang', () => {
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.percentDecimal();
+          const en = K.formatQuestion(q, 'en').questionText;
+          const he = K.formatQuestion(q, 'he').questionText;
+          assert(en === q.p + '% of ' + q.baseStr + ' = ?', 'EN wrong: ' + en);
+          assert(he === 'כמה זה ' + q.p + '% מ-' + q.baseStr + '?', 'HE wrong: ' + he);
+          assert(!/[֐-׿]/.test(en), 'EN percent-decimal contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(measurements, en) renders English unit labels', () => {
+        const allowedEn = new Set(['m', 'cm', 'mm']);
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.measurements();
+          const en = K.formatQuestion(q, 'en').questionText;
+          // Match pattern: "<num> <unit> = ? <unit>"
+          const m = en.match(/^[\d.]+ (m|cm|mm) = \? (m|cm|mm)$/);
+          assert(m, 'EN measurements format wrong: ' + en);
+          assert(allowedEn.has(m[1]) && allowedEn.has(m[2]), 'EN units wrong: ' + m[1] + '/' + m[2]);
+          assert(!/[֐-׿]/.test(en), 'EN measurements contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(measurements, he) renders Hebrew unit labels', () => {
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.measurements();
+          const he = K.formatQuestion(q, 'he').questionText;
+          // Hebrew labels: מ׳ / ס״מ / מ״מ
+          assert(/[֐-׿]/.test(he), 'HE measurements has no Hebrew: ' + he);
+        }
+      });
+
+      test('formatQuestion(circle, en) renders English geometry prose with r value', () => {
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.circle();
+          const en = K.formatQuestion(q, 'en').questionText;
+          const expected = (q.direction === 'area' ? 'Area' : 'Perimeter') +
+                           ' of a circle, r = ' + q.r;
+          assert(en === expected, 'EN circle wrong: ' + en);
+          assert(!/[֐-׿]/.test(en), 'EN circle contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion is pure — same q yields same output for the same lang', () => {
+        const q = K.gen.placeValue();
+        const a = K.formatQuestion(q, 'en').subQuestion;
+        const b = K.formatQuestion(q, 'en').subQuestion;
+        assert(a === b, 'formatQuestion not pure: ' + a + ' vs ' + b);
+      });
+
+      test('formatQuestion handles unknown kind via passthrough', () => {
+        const q = { kind: 'unit-conv', questionText: '0.3 = ?/10', subQuestion: '', answer: 3 };
+        const fmt = K.formatQuestion(q, 'en');
+        assert(fmt.questionText === '0.3 = ?/10', 'passthrough broken: ' + fmt.questionText);
       });
 
       finish();

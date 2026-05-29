@@ -573,6 +573,43 @@
     // Hebrew is the default (kids app for Israeli kids)
     let lang = localStorage.getItem('kaflon-lang') || 'he';
 
+    // Pure formatter: given a question's stored params + a lang, return display strings.
+    // Generators store the language-agnostic params on q (placeKey, p, base, fromKey, etc.) so
+    // language toggles can rebuild the prompt text in current lang without re-running the random
+    // generator. Kinds not listed here are language-neutral (pure-math: unit-conv, compare, addsub,
+    // ×÷10, fractions, mul-dec, libi-*) — their q.questionText is used verbatim.
+    function formatQuestion(q, lng) {
+      if (!q) return { questionText: '', subQuestion: '' };
+      if (q.kind === 'place-value') {
+        const placeName = i18n[lng][q.placeKey] || q.placeKey;
+        const tpl = i18n[lng]['place-question'] || 'Which digit is in the {place} place?';
+        return { questionText: q.num, subQuestion: tpl.replace('{place}', placeName) };
+      }
+      if (q.kind === 'percent-whole') {
+        const txt = lng === 'he' ? `כמה זה ${q.p}% מ-${q.base}?` : `${q.p}% of ${q.base} = ?`;
+        return { questionText: txt, subQuestion: '' };
+      }
+      if (q.kind === 'percent-decimal') {
+        const txt = lng === 'he' ? `כמה זה ${q.p}% מ-${q.baseStr}?` : `${q.p}% of ${q.baseStr} = ?`;
+        return { questionText: txt, subQuestion: '' };
+      }
+      if (q.kind === 'measurements') {
+        const labels = {
+          en: { m: 'm',  cm: 'cm',  mm: 'mm' },
+          he: { m: 'מ׳', cm: 'ס״מ', mm: 'מ״מ' }
+        };
+        const txt = `${q.fromStr} ${labels[lng][q.fromKey]} = ? ${labels[lng][q.toKey]}`;
+        return { questionText: txt, subQuestion: '' };
+      }
+      if (q.kind === 'circle-area' || q.kind === 'circle-perim') {
+        const templateKey = q.direction === 'area' ? 'geo-circle-area' : 'geo-circle-perim';
+        const fallback = q.direction === 'area' ? 'Area of a circle, r = {r}' : 'Perimeter of a circle, r = {r}';
+        const tpl = i18n[lng][templateKey] || fallback;
+        return { questionText: tpl.replace('{r}', q.r), subQuestion: '' };
+      }
+      return { questionText: q.questionText || '', subQuestion: q.subQuestion || '' };
+    }
+
     function applyLang() {
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
@@ -588,6 +625,28 @@
       // re-render formulas only if the screen exists in DOM (always true post-boot)
       if (document.getElementById('geometry-formulas')) renderGeometryFormulas();
       if (document.getElementById('libi-modules')) renderLibiMenu();
+      // Re-render the active drill's question text so the lang toggle updates prose-around-numbers
+      // for place-value / percent / measurements / circle / numberline prompts.
+      rebuildActiveQuestionTexts();
+    }
+
+    function rebuildActiveQuestionTexts() {
+      const dq = document.getElementById('d-question');
+      if (dq && dState && dState.current && dState.current.kind !== 'addsub') {
+        const fmt = formatQuestion(dState.current, lang);
+        dq.textContent = fmt.questionText;
+        const dsub = document.getElementById('d-subquestion');
+        if (dsub) dsub.textContent = fmt.subQuestion;
+      }
+      const gq = document.getElementById('g-question');
+      if (gq && gState && gState.current) {
+        gq.textContent = formatQuestion(gState.current, lang).questionText;
+      }
+      const np = document.getElementById('nl-prompt');
+      if (np && nlState && nlState.current) {
+        const tpl = i18n[lang]['numberline-prompt'] || 'Tap where {value} goes';
+        np.textContent = tpl.replace('{value}', '');
+      }
     }
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
@@ -1138,14 +1197,13 @@
       // Pad so the kid sees the full 3-decimal form
       const num = `${intPart}.${tenths}${hundredths}${thousandths}`;
       const place = PLACES[rand(0, 2)];
-      const placeName = i18n[lang][place.key] || place.key;
-      const template = i18n[lang]['place-question'] || 'Which digit is in the {place} place?';
-      const subQuestion = template.replace('{place}', placeName);
       return {
         questionText: num,
-        subQuestion,
+        subQuestion: '',
         answer: digits[place.pos],
-        kind: 'place-value'
+        kind: 'place-value',
+        placeKey: place.key,
+        num
       };
     }
 
@@ -1339,19 +1397,16 @@
         fromValue = rand(1, 999);
       }
       const answer = Math.round(fromValue * p.factor * 1000) / 1000;
-      const labels = {
-        en: { m: 'm', cm: 'cm', mm: 'mm' },
-        he: { m: 'מ׳',  cm: 'ס״מ', mm: 'מ״מ' }
-      };
-      const fromLabel = labels[lang][p.from];
-      const toLabel = labels[lang][p.to];
       // canonicalize fromValue display (drop trailing zeros)
       const fromStr = parseFloat(fromValue.toString()).toString();
       return {
-        questionText: `${fromStr} ${fromLabel} = ? ${toLabel}`,
+        questionText: '',
         subQuestion: '',
         answer,
-        kind: 'measurements'
+        kind: 'measurements',
+        fromKey: p.from,
+        toKey: p.to,
+        fromStr
       };
     }
 
@@ -1370,14 +1425,13 @@
       const bucket = buckets[rand(0, buckets.length - 1)];
       const base = bucket.bases[rand(0, bucket.bases.length - 1)];
       const answer = bucket.p * base / 100;
-      const questionText = lang === 'he'
-        ? `כמה זה ${bucket.p}% מ-${base}?`
-        : `${bucket.p}% of ${base} = ?`;
       return {
-        questionText,
+        questionText: '',
         subQuestion: '',
         answer,
-        kind: 'percent-whole'
+        kind: 'percent-whole',
+        p: bucket.p,
+        base
       };
     }
 
@@ -1403,14 +1457,13 @@
       }
       const baseStr = parseFloat(base.toFixed(1)).toString();
       const answer = Math.round(p * base) / 100;
-      const questionText = lang === 'he'
-        ? `כמה זה ${p}% מ-${baseStr}?`
-        : `${p}% of ${baseStr} = ?`;
       return {
-        questionText,
+        questionText: '',
         subQuestion: '',
         answer,
-        kind: 'percent-decimal'
+        kind: 'percent-decimal',
+        p,
+        baseStr
       };
     }
 
@@ -1493,10 +1546,12 @@
           `<span style="grid-column: 1 / span 2; border-top: 5px solid #1e293b; ` +
           `margin-top: 0.1em;"></span>` +
           `</div>`;
+        subEl.textContent = q.subQuestion || '';
       } else {
-        qEl.textContent = q.questionText;
+        const fmt = formatQuestion(q, lang);
+        qEl.textContent = fmt.questionText;
+        subEl.textContent = fmt.subQuestion;
       }
-      subEl.textContent = q.subQuestion;
       qEl.classList.add('pop');
       setTimeout(() => qEl.classList.remove('pop'), 300);
       const input = document.getElementById('d-answer');
@@ -2013,12 +2068,8 @@
       const raw = direction === 'area' ? GEO_PI * r * r : 2 * GEO_PI * r;
       // Round to 2dp so kids can compute by hand with π=3.14 and match exactly.
       const answer = Math.round(raw * 100) / 100;
-      const templateKey = direction === 'area' ? 'geo-circle-area' : 'geo-circle-perim';
-      const template = i18n[lang][templateKey] || (direction === 'area'
-        ? 'Area of a circle, r = {r}'
-        : 'Perimeter of a circle, r = {r}');
       return {
-        questionText: template.replace('{r}', r),
+        questionText: '',
         answer,
         kind: 'circle-' + direction,
         direction,
@@ -2031,7 +2082,7 @@
     function nextGeometryQuestion() {
       const q = genCircle();
       gState.current = q;
-      document.getElementById('g-question').textContent = q.questionText;
+      document.getElementById('g-question').textContent = formatQuestion(q, lang).questionText;
       const ans = document.getElementById('g-answer');
       ans.value = '';
       ans.focus();
@@ -2373,7 +2424,10 @@
       GEO_PI,
       LIBI_MODULES,
       // P2.2 numberline UI constants (tests assert on the tolerance contract)
-      NL_TOLERANCE
+      NL_TOLERANCE,
+      // i18n surface — tests assert that lang toggles re-render drill prompts
+      formatQuestion,
+      i18n
     };
 
     // ---------- boot ----------
