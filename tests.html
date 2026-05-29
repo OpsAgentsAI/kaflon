@@ -100,6 +100,17 @@
         }
       });
 
+      // Regression for bug lGNRlF0p — placeKey lets applyLang() re-translate
+      // the in-flight drill prompt when the kid toggles HE↔EN mid-game.
+      test('genPlaceValue carries placeKey for re-translation', () => {
+        const validKeys = new Set(['tenths', 'hundredths', 'thousandths']);
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.placeValue();
+          assert(validKeys.has(q.placeKey),
+                 'placeKey missing or unexpected: ' + q.placeKey);
+        }
+      });
+
       // ------ genUnitConv ------
       test('genUnitConv denominator is one of 10, 100, 1000', () => {
         for (let i = 0; i < 200; i++) {

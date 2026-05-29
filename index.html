@@ -588,6 +588,22 @@
       // re-render formulas only if the screen exists in DOM (always true post-boot)
       if (document.getElementById('geometry-formulas')) renderGeometryFormulas();
       if (document.getElementById('libi-modules')) renderLibiMenu();
+      retranslateActiveDrill();
+    }
+
+    // Re-render the in-flight drill prompt when the language toggles mid-game.
+    // Drill subQuestion text is built at generation time (closes over `lang`), so
+    // without this the active prompt stays frozen in the prior language until
+    // the next question. See bug card lGNRlF0p.
+    function retranslateActiveDrill() {
+      const dCur = (typeof dState !== 'undefined') && dState.current;
+      if (dCur && dCur.kind === 'place-value' && dCur.placeKey) {
+        const placeName = i18n[lang][dCur.placeKey] || dCur.placeKey;
+        const template = i18n[lang]['place-question'] || 'Which digit is in the {place} place?';
+        dCur.subQuestion = template.replace('{place}', placeName);
+        const subEl = document.getElementById('d-subquestion');
+        if (subEl) subEl.textContent = dCur.subQuestion;
+      }
     }
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
@@ -1144,6 +1160,7 @@
       return {
         questionText: num,
         subQuestion,
+        placeKey: place.key,
         answer: digits[place.pos],
         kind: 'place-value'
       };
