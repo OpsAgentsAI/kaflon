@@ -171,6 +171,57 @@
       <div id="g-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
 
+    <!-- LIBI — curriculum menu (M1: 4 modules for whole numbers ≤ 20 + pure fractions) -->
+    <section id="libi-menu" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
+      <div>
+        <h2 class="text-2xl font-black" data-i18n="pick-drill">איזה תרגיל היום?</h2>
+        <p class="text-sm text-slate-500 mt-1" data-i18n="libi-blurb">מספרים שלמים עד 20 ושברים פשוטים (מכנים 2–10)</p>
+      </div>
+      <div class="space-y-2" id="libi-modules"></div>
+    </section>
+
+    <!-- LIBI DRILL — toggles between number / choice / fraction input rows -->
+    <section id="libi-drill" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="flex justify-between text-base">
+        <div class="bg-rose-50 rounded-full px-4 py-2">
+          <span data-i18n="score">ניקוד</span>: <span id="l-score" class="font-black text-rose-600">0</span>
+        </div>
+        <div class="bg-orange-50 rounded-full px-4 py-2">
+          <span data-i18n="streak">רצף</span>: <span id="l-streak" class="font-black text-orange-600">0</span> <span id="l-streak-emoji">🔥</span>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-rose-50 to-pink-50 rounded-3xl py-8 px-4 text-center select-none">
+        <div id="l-question" class="math text-5xl sm:text-6xl font-black" style="direction:ltr;">…</div>
+      </div>
+
+      <!-- number-input row -->
+      <div id="l-number-row" class="space-y-3">
+        <input id="l-answer" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-full text-5xl text-center py-5 border-4 border-rose-200 rounded-2xl focus:border-rose-500 outline-none font-black" placeholder="?">
+        <button id="l-submit-btn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
+      </div>
+
+      <!-- choice row (compareWhole) -->
+      <div id="l-choice-row" class="hidden grid grid-cols-3 gap-2">
+        <button data-lchoice="-1" class="l-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">&lt;</button>
+        <button data-lchoice="0" class="l-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">=</button>
+        <button data-lchoice="1" class="l-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-5xl active:scale-95 transition">&gt;</button>
+      </div>
+
+      <!-- fraction row (fractionsPure) -->
+      <div id="l-fraction-row" class="hidden space-y-3">
+        <div class="flex flex-col items-center gap-2 max-w-xs mx-auto">
+          <input id="l-num" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-32 text-4xl text-center py-3 border-4 border-rose-200 rounded-2xl focus:border-rose-500 outline-none font-black" placeholder="?">
+          <div class="h-1 w-32 bg-slate-800 rounded"></div>
+          <input id="l-den" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-32 text-4xl text-center py-3 border-4 border-rose-200 rounded-2xl focus:border-rose-500 outline-none font-black" placeholder="?">
+        </div>
+        <button id="l-fraction-submit-btn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
+      </div>
+
+      <button id="l-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
+      <div id="l-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
+    </section>
+
     <!-- GAME -->
     <section id="game" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
 
@@ -404,6 +455,11 @@
         'mul-dec-hint': '💡 Count the digits after the dot in BOTH numbers — the answer has the same total of digits after the dot.',
         'numberline-prompt': 'Tap where {value} goes',
         'numberline-try-again': 'Tap → for the next one',
+        'libi-blurb': 'Whole numbers ≤ 20 + pure fractions (denominators 2–10)',
+        'libi-compare': 'Compare numbers ≤ 20',
+        'libi-addsub': '+ and − up to 20',
+        'libi-multdiv': '× and ÷ tables 2–10',
+        'libi-fracpure': 'Fractions: + and −',
         'geometry': 'Geometry 📐',
         'geometry-blurb': 'Shapes — area, perimeter, formulas',
         'geo-formulas-title': 'Formula sheet',
@@ -481,6 +537,11 @@
         'mul-dec-hint': '💡 ספרו את הספרות אחרי הנקודה בשני המספרים — לתשובה אותו מספר של ספרות אחרי הנקודה.',
         'numberline-prompt': 'לחצי איפה {value}',
         'numberline-try-again': 'לחצי → לשאלה הבאה',
+        'libi-blurb': 'מספרים שלמים עד 20 ושברים פשוטים (מכנים 2–10)',
+        'libi-compare': 'השוואת מספרים עד 20',
+        'libi-addsub': 'חיבור וחיסור עד 20',
+        'libi-multdiv': 'לוחות כפל וחילוק 2–10',
+        'libi-fracpure': 'שברים: חיבור וחיסור',
         'geometry': 'גאומטריה 📐',
         'geometry-blurb': 'צורות — שטח, היקף, נוסחאות',
         'geo-formulas-title': 'דף נוסחאות',
@@ -526,6 +587,7 @@
       renderDecimalsMenu();
       // re-render formulas only if the screen exists in DOM (always true post-boot)
       if (document.getElementById('geometry-formulas')) renderGeometryFormulas();
+      if (document.getElementById('libi-modules')) renderLibiMenu();
     }
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
@@ -546,8 +608,13 @@
     if (!profiles) {
       profiles = [
         { id: 'moshe', name: { he: 'משה', en: 'Moshe' }, gender: 'm', track: 'multiply-divide' },
-        { id: 'ayala', name: { he: 'איילה', en: 'Ayala' }, gender: 'f', track: 'decimals' }
+        { id: 'ayala', name: { he: 'איילה', en: 'Ayala' }, gender: 'f', track: 'decimals' },
+        { id: 'libi',  name: { he: 'ליבי', en: 'Libi'  }, gender: 'f', track: 'libi' }
       ];
+      localStorage.setItem('kaflon.profiles', JSON.stringify(profiles));
+    } else if (!profiles.some(p => p.id === 'libi')) {
+      // Forward-migrate existing localStorage: add Libi to returning users.
+      profiles.push({ id: 'libi', name: { he: 'ליבי', en: 'Libi' }, gender: 'f', track: 'libi' });
       localStorage.setItem('kaflon.profiles', JSON.stringify(profiles));
     }
 
@@ -562,7 +629,7 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill'].forEach(s => {
+      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill'].forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.toggle('hidden', s !== id);
       });
@@ -580,6 +647,9 @@
       renderProfileChip();
       if (p.track === 'decimals') {
         showScreen('decimals-menu');
+      } else if (p.track === 'libi') {
+        renderLibiMenu();
+        showScreen('libi-menu');
       } else {
         // multiply-divide is the default
         loadBestForActive();
@@ -2025,6 +2095,257 @@
       if (e.key === 'Enter') submitGeometryAnswer();
     });
 
+    // ---------- libi track (v0.7 M1) ----------
+    // 4 generators for Libi: 3 whole-number drills (compare/+−/×÷) + 1 pure
+    // fractions drill (+/− only, denominators 2..10). Each module wires into
+    // the libi-drill screen which toggles between number/choice/fraction UIs.
+    function gcd2(a, b) {
+      a = Math.abs(a); b = Math.abs(b);
+      while (b) { const t = b; b = a % b; a = t; }
+      return a || 1;
+    }
+    function reduceFrac(n, d) {
+      const g = gcd2(n, d);
+      return { num: n / g, den: d / g };
+    }
+
+    // 1) compareWhole — two whole numbers, ask <,=,>
+    function genCompareWhole(opts) {
+      const min = (opts && opts.min) != null ? opts.min : 0;
+      const max = (opts && opts.max) != null ? opts.max : 20;
+      const a = rand(min, max);
+      const b = rand(min, max);
+      const operator = a < b ? '<' : a > b ? '>' : '=';
+      return { a, b, operator, kind: 'compare-whole' };
+    }
+
+    // 2) addsub20 — a,b ∈ [0,20], answer ∈ [0,20] (so subtraction stays positive)
+    function genAddSub20(opts) {
+      const op = (opts && opts.op) || (Math.random() < 0.5 ? '+' : '-');
+      let a, b, answer;
+      if (op === '+') {
+        a = rand(0, 20);
+        b = rand(0, 20 - a);  // ensure a+b ≤ 20
+        answer = a + b;
+      } else {
+        a = rand(0, 20);
+        b = rand(0, a);       // ensure a-b ≥ 0
+        answer = a - b;
+      }
+      return { a, b, op, answer, kind: 'addsub-20' };
+    }
+
+    // 3) multdiv20 — multiplication tables 2..10, answer ≤ 20
+    function genMultDiv20(opts) {
+      const op = (opts && opts.op) || (Math.random() < 0.5 ? '×' : '÷');
+      // pick a × b s.t. both 2..10 AND product ≤ 20; for divide we use the same constraint reversed
+      // factors that yield products ≤ 20: 2×{2..10}, 3×{2..6}, 4×{2..5}, 5×{2..4}, 6×{2..3}, 7×{2}, 8×{2}, 9×{2}, 10×{2}
+      const validPairs = [];
+      for (let x = 2; x <= 10; x++) {
+        for (let y = 2; y <= 10; y++) {
+          if (x * y <= 20) validPairs.push([x, y]);
+        }
+      }
+      const [x, y] = validPairs[rand(0, validPairs.length - 1)];
+      let a, b, answer;
+      if (op === '×') {
+        a = x; b = y; answer = a * b;
+      } else {
+        // a ÷ b = x  ⇔  a = x*y, b = y → answer = x
+        a = x * y; b = y; answer = x;
+      }
+      return { a, b, op, answer, kind: 'multdiv-20' };
+    }
+
+    // 4) fractionsPure — proper fractions, denom 2..10, op +/-, answer reduced
+    function genFractionsPure(opts) {
+      const denomMin = (opts && opts.denomMin) != null ? opts.denomMin : 2;
+      const denomMax = (opts && opts.denomMax) != null ? opts.denomMax : 10;
+      const op = (opts && opts.op) || (Math.random() < 0.5 ? '+' : '-');
+      const den1 = rand(denomMin, denomMax);
+      const den2 = rand(denomMin, denomMax);
+      const num1 = rand(1, den1 - 1);   // proper fraction
+      let num2 = rand(1, den2 - 1);
+      // For subtraction force first fraction ≥ second so the answer is non-negative
+      let n1 = num1, d1 = den1, n2 = num2, d2 = den2;
+      if (op === '-' && n1 * d2 < n2 * d1) {
+        [n1, n2] = [n2, n1];
+        [d1, d2] = [d2, d1];
+      }
+      const rawNum = op === '+' ? n1 * d2 + n2 * d1 : n1 * d2 - n2 * d1;
+      const rawDen = d1 * d2;
+      const { num, den } = reduceFrac(rawNum, rawDen);
+      return {
+        num1: n1, den1: d1, num2: n2, den2: d2, op,
+        answerNum: num, answerDen: den,
+        kind: 'fractions-pure'
+      };
+    }
+
+    // ---------- libi-menu + libi-drill UI ----------
+    const LIBI_MODULES = [
+      { key: 'compare', labelKey: 'libi-compare', kind: 'choice',   gen: genCompareWhole },
+      { key: 'addsub',  labelKey: 'libi-addsub',  kind: 'number',   gen: genAddSub20 },
+      { key: 'multdiv', labelKey: 'libi-multdiv', kind: 'number',   gen: genMultDiv20 },
+      { key: 'fracpure',labelKey: 'libi-fracpure',kind: 'fraction', gen: genFractionsPure }
+    ];
+
+    const lState = { activeModule: null, current: null, score: 0, streak: 0, best: 0 };
+    function lBestKey() {
+      const mod = lState.activeModule || 'unknown';
+      return `kaflon.profiles.libi.${mod}.best`;
+    }
+
+    function renderLibiMenu() {
+      const list = document.getElementById('libi-modules');
+      list.innerHTML = '';
+      LIBI_MODULES.forEach(m => {
+        const row = document.createElement('button');
+        row.className = 'w-full py-4 px-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
+        const label = document.createElement('span');
+        label.textContent = i18n[lang][m.labelKey] || m.key;
+        const tag = document.createElement('span');
+        tag.className = 'text-lg';
+        tag.textContent = '▸';
+        row.appendChild(label);
+        row.appendChild(tag);
+        row.addEventListener('click', () => enterLibiModule(m.key));
+        list.appendChild(row);
+      });
+    }
+
+    function applyLibiDrillUI(kind) {
+      document.getElementById('l-number-row').classList.toggle('hidden', kind !== 'number');
+      document.getElementById('l-choice-row').classList.toggle('hidden', kind !== 'choice');
+      document.getElementById('l-fraction-row').classList.toggle('hidden', kind !== 'fraction');
+    }
+
+    function enterLibiModule(key) {
+      const mod = LIBI_MODULES.find(m => m.key === key);
+      if (!mod) return;
+      lState.activeModule = key;
+      lState.score = 0;
+      lState.streak = 0;
+      lState.best = parseInt(localStorage.getItem(lBestKey()) || '0', 10);
+      document.getElementById('l-score').textContent = '0';
+      document.getElementById('l-streak').textContent = '0';
+      document.getElementById('l-streak-emoji').textContent = '🔥';
+      applyLibiDrillUI(mod.kind);
+      showScreen('libi-drill');
+      nextLibiQuestion();
+    }
+
+    function renderLibiQuestion(q) {
+      const qEl = document.getElementById('l-question');
+      if (q.kind === 'compare-whole') {
+        qEl.textContent = `${q.a} ☐ ${q.b}`;
+      } else if (q.kind === 'addsub-20' || q.kind === 'multdiv-20') {
+        qEl.textContent = `${q.a} ${q.op} ${q.b} = ?`;
+      } else if (q.kind === 'fractions-pure') {
+        // Render as stacked fractions on a single line
+        qEl.innerHTML =
+          `<span style="display:inline-flex;flex-direction:column;align-items:center;font-size:0.85em;line-height:1;">` +
+            `<span>${q.num1}</span><span style="border-top:3px solid currentColor;padding-top:0.05em;">${q.den1}</span>` +
+          `</span>` +
+          ` ${q.op} ` +
+          `<span style="display:inline-flex;flex-direction:column;align-items:center;font-size:0.85em;line-height:1;">` +
+            `<span>${q.num2}</span><span style="border-top:3px solid currentColor;padding-top:0.05em;">${q.den2}</span>` +
+          `</span>` +
+          ` = ?/?`;
+      }
+      qEl.classList.add('pop');
+      setTimeout(() => qEl.classList.remove('pop'), 300);
+    }
+
+    function nextLibiQuestion() {
+      const mod = LIBI_MODULES.find(m => m.key === lState.activeModule);
+      if (!mod) return;
+      const q = mod.gen();
+      lState.current = q;
+      renderLibiQuestion(q);
+      document.getElementById('l-answer').value = '';
+      document.getElementById('l-num').value = '';
+      document.getElementById('l-den').value = '';
+      document.getElementById('l-feedback').textContent = '';
+      if (mod.kind === 'number') document.getElementById('l-answer').focus();
+      else if (mod.kind === 'fraction') document.getElementById('l-num').focus();
+    }
+
+    function processLibiOutcome(isCorrect) {
+      const fb = document.getElementById('l-feedback');
+      const qEl = document.getElementById('l-question');
+      if (isCorrect) {
+        playCorrect();
+        lState.score++;
+        lState.streak++;
+        if (lState.streak > lState.best) {
+          lState.best = lState.streak;
+          localStorage.setItem(lBestKey(), lState.best);
+        }
+        document.getElementById('l-score').textContent = lState.score;
+        document.getElementById('l-streak').textContent = lState.streak;
+        document.getElementById('l-streak-emoji').textContent = streakEmoji(lState.streak);
+        qEl.classList.add('flash-correct');
+        fb.textContent = i18n[lang].correct;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-green-600';
+        setTimeout(() => { qEl.classList.remove('flash-correct'); nextLibiQuestion(); }, 700);
+      } else {
+        playWrong();
+        lState.streak = 0;
+        document.getElementById('l-streak').textContent = '0';
+        document.getElementById('l-streak-emoji').textContent = '🔥';
+        qEl.classList.add('flash-wrong');
+        const q = lState.current;
+        let expected;
+        if (q.kind === 'compare-whole') expected = q.operator;
+        else if (q.kind === 'fractions-pure') expected = `${q.answerNum}/${q.answerDen}`;
+        else expected = q.answer;
+        fb.textContent = `${i18n[lang].wrong} ${expected}`;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
+        setTimeout(() => { qEl.classList.remove('flash-wrong'); nextLibiQuestion(); }, 1600);
+      }
+    }
+
+    function submitLibiNumber() {
+      if (!lState.current) return;
+      const raw = document.getElementById('l-answer').value.trim();
+      if (raw === '') return;
+      const v = parseInt(raw, 10);
+      if (isNaN(v)) return;
+      processLibiOutcome(v === lState.current.answer);
+    }
+    function submitLibiFraction() {
+      if (!lState.current || lState.current.kind !== 'fractions-pure') return;
+      const ns = document.getElementById('l-num').value.trim();
+      const ds = document.getElementById('l-den').value.trim();
+      if (ns === '' || ds === '') return;
+      const n = parseInt(ns, 10);
+      const d = parseInt(ds, 10);
+      if (isNaN(n) || isNaN(d) || d === 0) return;
+      // Equivalence via cross-multiply
+      const correct = n * lState.current.answerDen === d * lState.current.answerNum;
+      processLibiOutcome(correct);
+    }
+    document.getElementById('l-submit-btn').addEventListener('click', submitLibiNumber);
+    document.getElementById('l-answer').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitLibiNumber();
+    });
+    document.getElementById('l-fraction-submit-btn').addEventListener('click', submitLibiFraction);
+    ['l-num', 'l-den'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitLibiFraction();
+      });
+    });
+    document.querySelectorAll('.l-choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!lState.current || lState.current.kind !== 'compare-whole') return;
+        const v = parseInt(btn.dataset.lchoice, 10);
+        const op = v === -1 ? '<' : v === 1 ? '>' : '=';
+        processLibiOutcome(op === lState.current.operator);
+      });
+    });
+    document.getElementById('l-back-btn').addEventListener('click', () => showScreen('libi-menu'));
+
     // ---------- testability surface ----------
     // Exposes pure generator functions for tests.html. Not used by the app
     // itself. Adds zero kilobytes to network when devtools is closed; safe
@@ -2039,13 +2360,18 @@
         percentDecimal: genPercentDecimal,
         mulDec: genMulDec,
         numberLine: genNumberLine,
-        circle: genCircle
+        circle: genCircle,
+        compareWhole: genCompareWhole,
+        addsub20: genAddSub20,
+        multdiv20: genMultDiv20,
+        fractionsPure: genFractionsPure
       },
       rand,
       PLACES,
       DECIMAL_MODULES,
       GEO_SHAPES,
       GEO_PI,
+      LIBI_MODULES,
       // P2.2 numberline UI constants (tests assert on the tolerance contract)
       NL_TOLERANCE
     };
