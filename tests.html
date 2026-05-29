@@ -294,6 +294,45 @@
         }
       });
 
+      // ------ genMulDec "free" / "ללא הגבלה" mode ------
+      // Ayala's unlimited boss mode: factors are ≥1, each independently 1–3 dp.
+      // Answer arithmetic is still exact; place-value rule still holds.
+      test('genMulDec free mode picks 1–3 dp per factor and integer part ≥ 1', () => {
+        const prev = K.dState.submode;
+        K.dState.submode = 'mul-dec-free';
+        try {
+          let sawDp1 = false, sawDp2 = false, sawDp3 = false;
+          for (let i = 0; i < 400; i++) {
+            const q = K.gen.mulDec();
+            assert(q.aDp >= 1 && q.aDp <= 3, 'aDp out of 1..3: ' + q.aDp);
+            assert(q.bDp >= 1 && q.bDp <= 3, 'bDp out of 1..3: ' + q.bDp);
+            if (q.aDp === 1 || q.bDp === 1) sawDp1 = true;
+            if (q.aDp === 2 || q.bDp === 2) sawDp2 = true;
+            if (q.aDp === 3 || q.bDp === 3) sawDp3 = true;
+            const m = q.questionText.match(/^(\d+\.\d+) × (\d+\.\d+) = \?$/);
+            assert(m, 'malformed prompt: ' + q.questionText);
+            const a = parseFloat(m[1]);
+            const b = parseFloat(m[2]);
+            // Free mode integer part is 1..9 — factors must be ≥1 (no leading 0.X)
+            assert(a >= 1 && b >= 1, 'free-mode factor < 1: ' + q.questionText);
+            // Place-value rule still holds (totalDp scale; tolerance for float)
+            assert(Math.abs(q.answer - a * b) < 1e-6,
+                   `answer mismatch: ${q.answer} vs ${a}*${b}=${a*b}`);
+            // Answer's dp ≤ aDp + bDp (max 6)
+            const ansStr = q.answer.toString();
+            const dotIdx = ansStr.indexOf('.');
+            const ansDp = dotIdx === -1 ? 0 : ansStr.length - dotIdx - 1;
+            assert(ansDp <= q.aDp + q.bDp,
+                   `place-value rule violated: ${ansStr} (${ansDp} dp) > aDp+bDp=${q.aDp+q.bDp}`);
+          }
+          assert(sawDp1, '1 dp factor never sampled');
+          assert(sawDp2, '2 dp factor never sampled');
+          assert(sawDp3, '3 dp factor never sampled');
+        } finally {
+          K.dState.submode = prev;
+        }
+      });
+
       // ------ genNumberLine (P2.2) ------
       test('genNumberLine target is a tenth in (0, 1)', () => {
         for (let i = 0; i < 100; i++) {
