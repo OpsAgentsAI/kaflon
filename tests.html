@@ -333,6 +333,44 @@
         }
       });
 
+      // ------ genDivDec (P3.4) — Ayala's "חילוק מספרים עשרוניים" / decimal ÷ decimal ------
+      // Built from the answer side: quotient q (≤3 dp) × divisor b = dividend a.
+      // Contract: clean (terminating) quotient, dividend dp ≤ 6, a/b === q.
+      test('genDivDec: quotient ≤3 dp, dividend dp ≤6, a÷b equals the answer, all dp sampled', () => {
+        let sawDp1 = false, sawDp2 = false, sawDp3 = false;
+        for (let i = 0; i < 400; i++) {
+          const q = K.gen.divDec();
+          assert(q.kind === 'div-dec', 'wrong kind: ' + q.kind);
+          // qDp is the quotient's precision — must be a clean ≤3 dp answer
+          assert(q.qDp >= 1 && q.qDp <= 3, 'qDp out of 1..3: ' + q.qDp);
+          assert(q.bDp >= 1 && q.bDp <= 3, 'bDp out of 1..3: ' + q.bDp);
+          // Dividend precision = qDp + bDp, must stay ≤ 6
+          assert(q.aDp === q.qDp + q.bDp, `aDp ${q.aDp} != qDp+bDp ${q.qDp + q.bDp}`);
+          assert(q.aDp <= 6, 'dividend dp > 6: ' + q.aDp);
+          if (q.bDp === 1) sawDp1 = true;
+          if (q.bDp === 2) sawDp2 = true;
+          if (q.bDp === 3) sawDp3 = true;
+          // Prompt shape: "<dividend> ÷ <divisor> = ?" — dividend may be an
+          // integer (trailing zeros trimmed), divisor always shows ≥1 dp.
+          const m = q.questionText.match(/^(\d+(?:\.\d+)?) ÷ (\d+\.\d+) = \?$/);
+          assert(m, 'malformed prompt: ' + q.questionText);
+          const a = parseFloat(m[1]);
+          const b = parseFloat(m[2]);
+          // The kid divides a by b and must get the stored answer (the quotient)
+          assert(Math.abs(a / b - q.answer) < 1e-6,
+                 `quotient mismatch: ${a}/${b}=${a / b} vs answer ${q.answer}`);
+          // Answer itself must be representable in ≤3 dp (within submitDecimal's
+          // 0.005 tolerance the kid can always type it exactly).
+          const ansStr = q.answer.toFixed(3);
+          assert(Math.abs(q.answer - parseFloat(ansStr)) < 1e-9,
+                 'answer not ≤3 dp: ' + q.answer);
+          assert(q.answer >= 1 && q.answer < 10, 'quotient out of [1,10): ' + q.answer);
+        }
+        assert(sawDp1, '1 dp divisor never sampled');
+        assert(sawDp2, '2 dp divisor never sampled');
+        assert(sawDp3, '3 dp divisor never sampled');
+      });
+
       // ------ genNumberLine (P2.2) ------
       test('genNumberLine target is a tenth in (0, 1)', () => {
         for (let i = 0; i < 100; i++) {
