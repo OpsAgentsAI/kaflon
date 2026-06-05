@@ -49,23 +49,10 @@ const SYSTEM_SUBJECTS = [
   }
 ];
 
-// Seed system subjects — call once via HTTP trigger or on first deploy
-exports.seedSubjects = require('firebase-functions/v2/https').onRequest(async (req, res) => {
-  const batch = db.batch();
-  for (const s of SYSTEM_SUBJECTS) {
-    const { id, ...data } = s;
-    data.createdAt = admin.firestore.FieldValue.serverTimestamp();
-    data.searchTokens = [
-      ...data.nameHe.toLowerCase().split(''),
-      ...data.nameEn.toLowerCase().split(' '),
-      data.nameHe.toLowerCase(),
-      data.nameEn.toLowerCase()
-    ].filter((v, i, a) => a.indexOf(v) === i);
-    batch.set(db.collection('subjects').doc(id), data);
-  }
-  await batch.commit();
-  res.json({ ok: true, seeded: SYSTEM_SUBJECTS.length });
-});
+// NOTE: system subjects (SYSTEM_SUBJECTS above) are seeded out-of-band via an
+// admin/REST one-off, NOT a public endpoint. The previous unauthenticated
+// onRequest seeder was removed (anyone with the URL could overwrite the shared
+// subjects collection). Re-add ONLY as an isAdmin()-gated onCall if needed.
 
 // Kaflon agent — generates a new subject with starter questions
 exports.kaflonAgent = onCall({ region: 'us-central1' }, async (request) => {
