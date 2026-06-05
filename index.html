@@ -12,6 +12,11 @@
   <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%96%3C/text%3E%3C/svg%3E">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
     body { font-family: 'Heebo', 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -39,14 +44,42 @@
       </h1>
       <div class="flex gap-2">
         <button id="profile-chip" class="hidden px-3 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition" aria-label="Switch profile"></button>
+        <button id="signout-btn" class="hidden px-3 py-2 bg-white rounded-full shadow-md text-sm text-slate-500 hover:text-red-500 hover:shadow-lg active:scale-95 transition" title="Sign out">⏏</button>
         <button id="lang-toggle" class="px-4 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition">
           English
         </button>
       </div>
     </header>
 
-    <!-- PROFILE PICKER -->
-    <section id="profile-picker" class="bg-white rounded-3xl shadow-xl p-6 space-y-5">
+    <!-- AUTH SCREEN -->
+    <section id="auth-screen" class="bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="text-center space-y-1 pb-2">
+        <div class="text-5xl font-black">✖</div>
+        <h2 class="text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kaflon · כפלון</h2>
+        <p class="text-slate-500 text-sm">תרגול מתמטיקה לילדים | Math practice for kids</p>
+      </div>
+      <button id="google-signin-btn" class="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-base hover:border-indigo-300 active:scale-95 transition flex items-center justify-center gap-3">
+        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span data-i18n="signin-google">התחבר עם Google</span>
+      </button>
+      <div class="relative flex items-center gap-3 py-1">
+        <div class="flex-1 border-t border-slate-200"></div>
+        <span class="text-xs text-slate-400">או</span>
+        <div class="flex-1 border-t border-slate-200"></div>
+      </div>
+      <div class="space-y-3">
+        <input id="auth-email" type="email" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:border-indigo-500 outline-none" dir="ltr" placeholder="email@example.com" autocomplete="email">
+        <input id="auth-password" type="password" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:border-indigo-500 outline-none" dir="ltr" placeholder="••••••••" autocomplete="current-password">
+        <div id="auth-error" class="hidden text-red-500 text-sm text-center py-1"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="email-signin-btn" class="py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition" data-i18n="signin">התחבר</button>
+          <button id="email-signup-btn" class="py-3 bg-slate-100 rounded-xl font-bold active:scale-95 transition" data-i18n="signup">הרשמה</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE PICKER (kids screen) -->
+    <section id="profile-picker" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
       <h2 class="text-2xl font-black text-center" data-i18n="who-playing">מי משחק?</h2>
       <div id="profile-grid" class="space-y-3"></div>
       <button id="add-profile-btn" class="w-full py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-lg active:scale-95 transition" data-i18n="add-kid">
@@ -386,6 +419,111 @@
       <button class="numpad-key w-full py-4 bg-green-500 text-white rounded-2xl font-black text-2xl shadow active:scale-95 active:bg-green-600 transition" data-key="enter">✓</button>
     </div>
 
+    <!-- ADD KID SCREEN -->
+    <section id="add-kid-screen" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="flex items-center gap-3">
+        <button id="back-from-add-kid" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none px-1">‹</button>
+        <h2 class="text-2xl font-black" data-i18n="add-kid-title">ילד/ה חדש/ה</h2>
+      </div>
+      <div class="space-y-3">
+        <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider" data-i18n="kid-name-label">שם</label>
+        <input id="kid-name-input" type="text" maxlength="20" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-lg focus:border-indigo-500 outline-none text-center font-bold" placeholder="שם הילד/ה" autocomplete="off">
+        <div class="grid grid-cols-2 gap-2">
+          <button data-gender="f" class="add-kid-gender-btn py-3 rounded-xl bg-pink-50 font-bold active:scale-95 transition" data-i18n="girl">בת</button>
+          <button data-gender="m" class="add-kid-gender-btn py-3 rounded-xl bg-blue-50 font-bold active:scale-95 transition" data-i18n="boy">בן</button>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider" data-i18n="subjects-label">נושאים</label>
+        <div id="add-kid-subjects-list" class="space-y-2 min-h-8"></div>
+        <button id="add-kid-add-subject-btn" class="w-full py-3 bg-indigo-50 rounded-xl font-bold text-indigo-700 hover:bg-indigo-100 active:scale-95 transition" data-i18n="add-subject-btn">+ הוסף נושא</button>
+      </div>
+      <button id="save-kid-btn" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg active:scale-95 transition" data-i18n="save">שמור</button>
+    </section>
+
+    <!-- SUBJECT PICKER (drill selection for active kid) -->
+    <section id="subject-picker-screen" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
+      <div class="flex items-center gap-3">
+        <button id="back-from-subject-picker" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none px-1">‹</button>
+        <h2 class="text-2xl font-black" data-i18n="pick-subject">איזה נושא היום?</h2>
+      </div>
+      <div id="kid-subject-list" class="space-y-3"></div>
+      <button id="manage-subjects-btn" class="w-full py-3 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold text-slate-600 active:scale-95 transition" data-i18n="manage-subjects">ניהול נושאים ✏️</button>
+    </section>
+
+    <!-- SUBJECTS MANAGE SCREEN (add/remove subjects per kid) -->
+    <section id="subjects-manage-screen" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
+      <div class="flex items-center gap-3">
+        <button id="back-from-subjects-manage" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none px-1">‹</button>
+        <h2 class="text-2xl font-black" data-i18n="manage-subjects">נושאים</h2>
+      </div>
+      <input id="subject-search" type="text" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:border-indigo-500 outline-none" placeholder="חיפוש נושא... / Search subject..." autocomplete="off">
+      <div id="subjects-global-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+      <button id="create-subject-btn" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-2xl font-black text-base active:scale-95 transition" data-i18n="create-with-ai">✨ צור נושא חדש עם AI</button>
+    </section>
+
+    <!-- ADD SUBJECT SCREEN (kaflon agent) -->
+    <section id="add-subject-screen" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="flex items-center gap-3">
+        <button id="back-from-add-subject" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none px-1">‹</button>
+        <h2 class="text-2xl font-black" data-i18n="new-subject-title">נושא חדש</h2>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="subject-name-he">שם בעברית</label>
+          <input id="subject-name-he" type="text" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:border-indigo-500 outline-none font-bold" dir="rtl" placeholder="כפל — לוח 7" autocomplete="off">
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="subject-name-en">Name in English</label>
+          <input id="subject-name-en" type="text" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:border-indigo-500 outline-none font-bold" dir="ltr" placeholder="Multiplication table 7" autocomplete="off">
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="subject-desc">תיאור (אופציונלי)</label>
+          <textarea id="subject-desc" rows="2" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:border-indigo-500 outline-none resize-none" placeholder="תיאור קצר של הנושא..."></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-1" data-i18n="grade-level">כיתה</label>
+          <select id="subject-grade" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-base focus:border-indigo-500 outline-none bg-white">
+            <option value="1">כיתה א / Grade 1</option>
+            <option value="2">כיתה ב / Grade 2</option>
+            <option value="3" selected>כיתה ג / Grade 3</option>
+            <option value="4">כיתה ד / Grade 4</option>
+            <option value="5">כיתה ה / Grade 5</option>
+            <option value="6">כיתה ו / Grade 6</option>
+            <option value="7">כיתה ז / Grade 7</option>
+            <option value="8">כיתה ח / Grade 8</option>
+          </select>
+        </div>
+      </div>
+      <div id="agent-status" class="hidden text-center py-3 space-y-1">
+        <p id="agent-status-text" class="font-bold text-indigo-600 text-base"></p>
+      </div>
+      <div id="add-subject-error" class="hidden text-red-500 text-sm text-center py-1"></div>
+      <button id="generate-subject-btn" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-2xl font-black text-lg active:scale-95 transition disabled:opacity-50" data-i18n="generate-subject">✨ צור נושא</button>
+    </section>
+
+    <!-- CUSTOM DRILL (agent-created subjects) -->
+    <section id="custom-drill" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="flex items-center justify-between">
+        <button id="back-from-custom-drill" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none px-1">‹</button>
+        <h2 id="custom-drill-title" class="text-xl font-black text-center flex-1"></h2>
+        <div class="w-8"></div>
+      </div>
+      <div class="flex gap-6 justify-center text-sm font-bold text-slate-500">
+        <span><span data-i18n="score">ניקוד</span>: <span id="custom-score" class="text-indigo-600">0</span></span>
+        <span><span data-i18n="streak">רצף</span>: <span id="custom-streak" class="text-purple-600">0</span></span>
+      </div>
+      <div class="bg-slate-50 rounded-2xl p-6 space-y-4">
+        <p id="custom-question-text" class="text-xl font-bold text-center min-h-12"></p>
+        <div id="custom-choices" class="hidden grid grid-cols-2 gap-3"></div>
+        <div id="custom-text-input" class="hidden space-y-3">
+          <input id="custom-answer-input" type="text" class="answer-input w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-xl text-center focus:border-indigo-500 outline-none font-bold" dir="ltr" autocomplete="off">
+          <button id="custom-check-btn" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition" data-i18n="check">בדיקה ✓</button>
+        </div>
+      </div>
+      <div id="custom-feedback" class="hidden text-center text-lg font-bold py-2"></div>
+    </section>
+
     <footer class="text-center text-xs text-slate-500 mt-8 space-y-1">
       <p>
         <a href="https://github.com/OpsAgentsAI/kaflon" class="underline hover:text-indigo-600">GitHub</a>
@@ -484,7 +622,23 @@
         'geo-circle-area': 'Area of a circle, r = {r}',
         'geo-circle-perim': 'Perimeter of a circle, r = {r}',
         'geo-pi-use': 'Use π ≈ 3.14',
-        'tap-formula': 'Tap a shape to see its formula'
+        'tap-formula': 'Tap a shape to see its formula',
+        'signin-google': 'Sign in with Google',
+        'signin': 'Sign in',
+        'signup': 'Sign up',
+        'add-kid-title': 'New kid',
+        'kid-name-label': 'Name',
+        'subjects-label': 'Subjects',
+        'add-subject-btn': '+ Add subject',
+        'pick-subject': "What's today's subject?",
+        'manage-subjects': 'Manage subjects',
+        'create-with-ai': '✨ Create new subject with AI',
+        'new-subject-title': 'New subject',
+        'subject-name-he': 'Name in Hebrew',
+        'subject-name-en': 'Name in English',
+        'subject-desc': 'Description (optional)',
+        'grade-level': 'Grade',
+        'generate-subject': '✨ Create subject'
       },
       he: {
         mode: 'מצב',
@@ -566,7 +720,23 @@
         'geo-circle-area': 'שטח עיגול, r = {r}',
         'geo-circle-perim': 'היקף עיגול, r = {r}',
         'geo-pi-use': 'השתמשי ב-π ≈ 3.14',
-        'tap-formula': 'געי בצורה כדי לראות את הנוסחה'
+        'tap-formula': 'געי בצורה כדי לראות את הנוסחה',
+        'signin-google': 'התחברי עם Google',
+        'signin': 'התחבר/י',
+        'signup': 'הרשמה',
+        'add-kid-title': 'ילד/ה חדש/ה',
+        'kid-name-label': 'שם',
+        'subjects-label': 'נושאים',
+        'add-subject-btn': '+ הוסף נושא',
+        'pick-subject': 'איזה נושא היום?',
+        'manage-subjects': 'ניהול נושאים ✏️',
+        'create-with-ai': '✨ צור נושא חדש עם AI',
+        'new-subject-title': 'נושא חדש',
+        'subject-name-he': 'שם בעברית',
+        'subject-name-en': 'Name in English',
+        'subject-desc': 'תיאור (אופציונלי)',
+        'grade-level': 'כיתה',
+        'generate-subject': '✨ צור נושא'
       }
     };
 
@@ -629,7 +799,7 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill'].forEach(s => {
+      ['auth-screen', 'profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill', 'add-kid-screen', 'subject-picker-screen', 'subjects-manage-screen', 'add-subject-screen', 'custom-drill'].forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.toggle('hidden', s !== id);
       });
@@ -731,6 +901,7 @@
     // ---------- add-profile flow ----------
     let newProfileGender = 'f';
     document.getElementById('add-profile-btn').addEventListener('click', () => {
+      if (window.kaflonHandleAddKid) { window.kaflonHandleAddKid(); return; }
       document.getElementById('add-profile-form').classList.remove('hidden');
       document.getElementById('new-profile-name').focus();
     });
@@ -2378,7 +2549,8 @@
 
     // ---------- boot ----------
     applyLang();
-    routeProfile();
+    // Firebase auth state listener in app.js handles routing
   </script>
+  <script src="app.js"></script>
 </body>
 </html>

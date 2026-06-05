@@ -10,7 +10,8 @@
       "README.md",
       "LICENSE",
       ".github/**",
-      "*.md"
+      "*.md",
+      "functions/**"
     ],
     "headers": [
       {
@@ -20,11 +21,27 @@
         ]
       },
       {
-        "source": "**/*.@(js|css|svg|png|webp|woff2)",
+        "source": "/app.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/firebase-config.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "**/*.@(css|svg|png|webp|woff2)",
         "headers": [
           { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
         ]
       }
     ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
   }
 }

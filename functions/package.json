@@ -1,0 +1,12 @@
+{
+  "name": "kaflon-functions",
+  "version": "1.0.0",
+  "description": "Kaflon Cloud Functions — kaflon agent (Vertex AI Gemini)",
+  "engines": { "node": "20" },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^6.0.0",
+    "@google-cloud/vertexai": "^1.0.0"
+  }
+}

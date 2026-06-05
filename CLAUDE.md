@@ -10,10 +10,15 @@ Two surfaces share the same game logic:
 
 ## Tech Stack
 
-- Single file: `index.html` — everything is in here
+- `index.html` — all screens and markup
+- `app.js` — Firebase auth + kids + subjects + drill routing (loaded after inline script)
+- `firebase-config.js` — Firebase project config (safe to commit)
 - Tailwind via CDN — no PostCSS, no `tailwind.config.js`
+- Firebase SDK via CDN (compat v10) — Auth, Firestore, Functions
 - Vanilla JS, no framework, no bundler
-- `localStorage` for all state
+- `localStorage` for per-kid drill state (best scores, sound, numpad)
+- Firestore for user accounts, kids, global subjects
+- Cloud Functions for the kaflon agent (Vertex AI Gemini Flash)
 - Firebase Hosting on GCP project `opsagent-prod`, site `kaflon` (credit-covered through 2028)
 
 ## Code Conventions
@@ -34,14 +39,18 @@ Two surfaces share the same game logic:
 
 **Hard constraints — these define what Kaflon is. Don't propose changes that violate them:**
 
-- One file: `index.html`. No bundlers, no `npm install`, no compiled output. View-source is the documentation
-- No accounts, backend, tracking, ads, IAPs, or analytics that phone home
-- Tailwind CDN only
-- MIT license stays MIT
-- Hebrew RTL + English LTR both first-class
-- Firebase Hosting on `opsagent-prod`. The old `opsagentsai.github.io/kaflon` GitHub Pages mirror is being phased out — don't add it back to docs
+- No bundlers, no `npm install` for frontend code. CDN only (Tailwind + Firebase compat SDK).
+- No ads, IAPs, analytics that phone home, or paywalled features. MIT stays MIT.
+- Hebrew RTL + English LTR both first-class. Every feature must work in both directions.
+- Firebase Hosting on `opsagent-prod`. No GitHub Pages.
+- Firestore data: users can only read/write their own kids. Subjects are globally readable, agent-only writable.
+- The kaflon agent (Cloud Function) is the only write path for new subjects. No direct Firestore writes for subjects from the frontend.
 
-If a feature would break any of these, the answer is "fork it."
+**Phase 2 additions (no longer out of scope):**
+
+- User accounts via Firebase Auth (Google + email/password)
+- Firestore for users, kids, and shared subject library
+- Cloud Function `kaflonAgent` — Vertex AI Gemini Flash generates subject + starter questions
 
 **Out of scope** (the no-list):
 

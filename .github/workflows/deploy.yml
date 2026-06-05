@@ -37,10 +37,13 @@ jobs:
       - name: Install firebase-tools
         run: npm install -g firebase-tools@latest
 
-      - name: Deploy to Firebase Hosting (live)
+      - name: Install function dependencies
+        run: npm install --prefix functions --omit=dev
+
+      - name: Deploy to Firebase Hosting + Functions (live)
         run: |
           firebase deploy \
-            --only "hosting:${HOSTING_TARGET}" \
+            --only "hosting:${HOSTING_TARGET},functions" \
             --project "${FIREBASE_PROJECT}" \
             --non-interactive \
             --force
