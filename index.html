@@ -16,6 +16,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics-compat.js"></script>
   <script src="firebase-config.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
@@ -44,6 +45,7 @@
       </h1>
       <div class="flex gap-2">
         <button id="profile-chip" class="hidden px-3 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition" aria-label="Switch profile"></button>
+        <button id="admin-btn" class="hidden px-3 py-2 bg-white rounded-full shadow-md text-sm text-slate-500 hover:text-indigo-600 hover:shadow-lg active:scale-95 transition" title="Admin">🛠️</button>
         <button id="signout-btn" class="hidden px-3 py-2 bg-white rounded-full shadow-md text-sm text-slate-500 hover:text-red-500 hover:shadow-lg active:scale-95 transition" title="Sign out">⏏</button>
         <button id="lang-toggle" class="px-4 py-2 bg-white rounded-full shadow-md text-sm font-bold hover:shadow-lg active:scale-95 transition">
           English
@@ -524,6 +526,16 @@
       <div id="custom-feedback" class="hidden text-center text-lg font-bold py-2"></div>
     </section>
 
+    <!-- ADMIN DASHBOARD (admin-only — all users) -->
+    <section id="admin-screen" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
+      <div class="flex items-center gap-3">
+        <button id="back-from-admin" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none px-1">‹</button>
+        <h2 class="text-2xl font-black" data-i18n="admin-title">ניהול — כל המשתמשים</h2>
+      </div>
+      <div id="admin-summary" class="text-sm font-bold text-slate-500"></div>
+      <div id="admin-users-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+    </section>
+
     <footer class="text-center text-xs text-slate-500 mt-8 space-y-1">
       <p>
         <a href="https://github.com/OpsAgentsAI/kaflon" class="underline hover:text-indigo-600">GitHub</a>
@@ -638,7 +650,8 @@
         'subject-name-en': 'Name in English',
         'subject-desc': 'Description (optional)',
         'grade-level': 'Grade',
-        'generate-subject': '✨ Create subject'
+        'generate-subject': '✨ Create subject',
+        'admin-title': 'Admin — all users'
       },
       he: {
         mode: 'מצב',
@@ -736,7 +749,8 @@
         'subject-name-en': 'Name in English',
         'subject-desc': 'תיאור (אופציונלי)',
         'grade-level': 'כיתה',
-        'generate-subject': '✨ צור נושא'
+        'generate-subject': '✨ צור נושא',
+        'admin-title': 'ניהול — כל המשתמשים'
       }
     };
 
@@ -799,7 +813,7 @@
     }
 
     function showScreen(id) {
-      ['auth-screen', 'profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill', 'add-kid-screen', 'subject-picker-screen', 'subjects-manage-screen', 'add-subject-screen', 'custom-drill'].forEach(s => {
+      ['auth-screen', 'profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill', 'add-kid-screen', 'subject-picker-screen', 'subjects-manage-screen', 'add-subject-screen', 'custom-drill', 'admin-screen'].forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.toggle('hidden', s !== id);
       });

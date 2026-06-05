@@ -160,3 +160,46 @@ Rules:
   const ref = await db.collection('subjects').add(subjectDoc);
   return { subjectId: ref.id };
 });
+
+// Admin allowlist — who may view the admin dashboard
+const ADMIN_EMAILS = ['michal@opsagents.agency', 'michal@msapps.mobi'];
+
+function isAdmin(auth) {
+  if (!auth) return false;
+  if (auth.token && auth.token.admin === true) return true;
+  const email = (auth.token && auth.token.email || '').toLowerCase();
+  return ADMIN_EMAILS.includes(email);
+}
+
+// listAllUsers — admin dashboard data: every user + their kid count.
+// Admin-claim/allowlist gated. Never expose this path to non-admins.
+exports.listAllUsers = onCall({ region: 'us-central1' }, async (request) => {
+  if (!isAdmin(request.auth)) {
+    throw new HttpsError('permission-denied', 'Admin access required');
+  }
+
+  const users = [];
+  let pageToken;
+  do {
+    const res = await admin.auth().listUsers(1000, pageToken);
+    for (const u of res.users) {
+      let kidCount = 0;
+      try {
+        const kidsSnap = await db.collection('users').doc(u.uid).collection('kids').count().get();
+        kidCount = kidsSnap.data().count;
+      } catch { kidCount = 0; }
+      users.push({
+        uid: u.uid,
+        email: u.email || '',
+        displayName: u.displayName || '',
+        createdAt: u.metadata.creationTime || '',
+        lastSignIn: u.metadata.lastSignInTime || '',
+        kidCount
+      });
+    }
+    pageToken = res.pageToken;
+  } while (pageToken);
+
+  users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return { users, total: users.length };
+});

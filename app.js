@@ -105,6 +105,7 @@ function getKidSubjects(kid) {
 function routeBySubject(subject) {
   if (!subject) { showScreen('subject-picker-screen'); return; }
   const dt = subject.drillType;
+  track('drill_start', { drill_type: dt, subject_id: subject.id });
   if (dt === 'decimals') {
     showScreen('decimals-menu');
   } else if (dt === 'geometry') {
@@ -361,8 +362,10 @@ function doSignOut() {
     currentUser = null; activeKidId_fs = null; activeProfileId = null;
     const chip = document.getElementById('profile-chip');
     const sBtn = document.getElementById('signout-btn');
+    const aBtn = document.getElementById('admin-btn');
     if (chip) chip.classList.add('hidden');
     if (sBtn) sBtn.classList.add('hidden');
+    if (aBtn) aBtn.classList.add('hidden');
     showScreen('auth-screen');
   });
 }
@@ -472,6 +475,7 @@ document.getElementById('save-kid-btn').addEventListener('click', async () => {
   document.getElementById('save-kid-btn').disabled = true;
   try {
     await addKidToFirestore(name, newKidGender_fs, addKidSelectedSubjectIds);
+    track('kid_added', { subject_count: addKidSelectedSubjectIds.length });
     showScreen('profile-picker');
   } finally {
     document.getElementById('save-kid-btn').disabled = false;
@@ -557,6 +561,7 @@ document.getElementById('generate-subject-btn').addEventListener('click', async 
       if (!addKidSelectedSubjectIds.includes(subjectId)) addKidSelectedSubjectIds.push(subjectId);
     }
 
+    track('subject_created', { drill_type: 'custom', grade });
     document.getElementById('agent-status-text').textContent = lang === 'he' ? '✅ הנושא נוצר בהצלחה!' : '✅ Subject created!';
     setTimeout(() => showScreen('subjects-manage-screen'), 1200);
   } catch (e) {
@@ -676,20 +681,69 @@ document.getElementById('back-from-custom-drill').addEventListener('click', () =
   }
 });
 
+// ---- Admin dashboard ----
+const ADMIN_EMAILS = ['michal@opsagents.agency', 'michal@msapps.mobi'];
+
+function isCurrentUserAdmin() {
+  if (!currentUser) return false;
+  return ADMIN_EMAILS.includes((currentUser.email || '').toLowerCase());
+}
+
+async function openAdminDashboard() {
+  showScreen('admin-screen');
+  const summary = document.getElementById('admin-summary');
+  const list = document.getElementById('admin-users-list');
+  summary.textContent = lang === 'he' ? 'טוען...' : 'Loading...';
+  list.innerHTML = '';
+  track('admin_dashboard_open');
+
+  try {
+    const listAllUsersFn = functions.httpsCallable('listAllUsers');
+    const res = await listAllUsersFn({});
+    const { users, total } = res.data;
+    summary.textContent = lang === 'he' ? `${total} משתמשים` : `${total} users`;
+    list.innerHTML = '';
+    users.forEach(u => {
+      const created = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '';
+      const row = document.createElement('div');
+      row.className = 'py-3 px-4 bg-slate-50 rounded-xl flex items-center justify-between gap-3';
+      row.innerHTML = `
+        <div class="min-w-0">
+          <div class="font-bold text-sm truncate" dir="ltr">${u.email || u.uid}</div>
+          <div class="text-xs text-slate-400" dir="ltr">${u.displayName ? u.displayName + ' · ' : ''}${created}</div>
+        </div>
+        <div class="shrink-0 text-xs font-bold px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">
+          ${u.kidCount} ${lang === 'he' ? 'ילדים' : 'kids'}
+        </div>`;
+      list.appendChild(row);
+    });
+  } catch (e) {
+    summary.textContent = lang === 'he' ? 'שגיאה בטעינת המשתמשים' : 'Error loading users';
+    track('exception', { description: 'admin listAllUsers: ' + String(e.message || e).slice(0, 120), fatal: false });
+  }
+}
+
+document.getElementById('admin-btn').addEventListener('click', openAdminDashboard);
+document.getElementById('back-from-admin').addEventListener('click', () => showScreen('profile-picker'));
+
 // ---- Firebase auth state listener ----
 auth.onAuthStateChanged(async user => {
   const signoutBtn = document.getElementById('signout-btn');
+  const adminBtn = document.getElementById('admin-btn');
   hideAuthError();
 
   if (!user) {
     currentUser = null;
     if (signoutBtn) signoutBtn.classList.add('hidden');
+    if (adminBtn) adminBtn.classList.add('hidden');
     showScreen('auth-screen');
     return;
   }
 
   currentUser = user;
   if (signoutBtn) signoutBtn.classList.remove('hidden');
+  if (adminBtn) adminBtn.classList.toggle('hidden', !isCurrentUserAdmin());
+  track('login', { method: user.providerData[0]?.providerId || 'unknown' });
 
   try {
     await ensureUserDoc(user);

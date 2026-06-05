@@ -52,6 +52,12 @@ Two surfaces share the same game logic:
 - Firestore for users, kids, and shared subject library
 - Cloud Function `kaflonAgent` — Vertex AI Gemini Flash generates subject + starter questions
 
+**Mandatory app baseline (per global rule "Every app ships with"):**
+
+- **Admin dashboard** — `admin-screen`, admin-only (email allowlist `michal@opsagents.agency` / `michal@msapps.mobi`), lists all users + kid counts via the admin-gated `listAllUsers` Cloud Function. Admin button (🛠️) shows in header only for allowlisted emails.
+- **Google Analytics (GA4)** — wired via `firebase-analytics-compat` + `track()` helper in `firebase-config.js`. Auto-activates once a GA4 stream is linked to the web app (operator/console step to provision the measurementId). Key events: `login`, `kid_added`, `subject_created`, `drill_start`, `admin_dashboard_open`, `exception`.
+- **Crashlytics** — N/A for the web app (no web SDK). Web error tracking = GA4 `exception` events (window `error` + `unhandledrejection`). The Cardputer/native surface (`apps/kaflon.py`) is the one that would carry Crashlytics if it ever ships as a packaged native app.
+
 **Out of scope** (the no-list):
 
 - Accounts, cloud-sync profiles, parent dashboards
