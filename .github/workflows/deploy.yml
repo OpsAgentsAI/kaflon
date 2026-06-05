@@ -40,10 +40,14 @@ jobs:
       - name: Install function dependencies
         run: npm install --prefix functions --omit=dev
 
+      # Functions deploy is SCOPED to kaflon's own functions by name.
+      # opsagent-prod is a SHARED project — an unscoped `--only functions`
+      # would treat kaflon's set as the full desired state and DELETE every
+      # other app's Cloud Functions. Scope by name so other apps are untouched.
       - name: Deploy to Firebase Hosting + Functions (live)
         run: |
           firebase deploy \
-            --only "hosting:${HOSTING_TARGET},functions" \
+            --only "hosting:${HOSTING_TARGET},functions:kaflonAgent,functions:listAllUsers" \
             --project "${FIREBASE_PROJECT}" \
             --non-interactive \
             --force
