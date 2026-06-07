@@ -68,12 +68,14 @@ jobs:
         id: preview
         run: |
           CHANNEL="preview-${{ github.event.pull_request.number }}"
+          # tee (not >) so firebase's --json error payload is visible in the log on failure
+          set -o pipefail
           firebase hosting:channel:deploy "${CHANNEL}" \
             --only "${HOSTING_TARGET}" \
             --project "${FIREBASE_PROJECT}" \
             --expires 7d \
             --non-interactive \
-            --json > preview-output.json
+            --json 2>&1 | tee preview-output.json
           URL=$(jq -r '.result["'${HOSTING_TARGET}'"].url' preview-output.json)
           echo "url=${URL}" >> "$GITHUB_OUTPUT"
 
