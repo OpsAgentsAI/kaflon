@@ -54,4 +54,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Made by
 
-[MSApps](https://msapps.mobi) / [OpsAgents](https://opsagents.agency) — Tel Aviv. Built with Claude Code.
+[MSApps](https://msapps.mobi) / [OpsAgents](https://opsagents.agency) — Tel Aviv.
