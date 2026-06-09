@@ -2685,7 +2685,7 @@
           const btn = document.createElement('button');
           btn.className = 'e-choice-btn math py-6 bg-sky-50 hover:bg-sky-100 rounded-2xl font-black text-5xl active:scale-95 transition';
           btn.textContent = n;
-          btn.addEventListener('click', () => submitEli(n));
+          btn.addEventListener('click', () => submitEli(n, btn));
           row.appendChild(btn);
         });
       } else {
@@ -2696,7 +2696,7 @@
           const btn = document.createElement('button');
           btn.className = 'e-choice-btn flex items-center justify-center py-4 bg-sky-50 hover:bg-sky-100 rounded-2xl active:scale-95 transition';
           btn.innerHTML = miniDiceHtml(n);
-          btn.addEventListener('click', () => submitEli(n));
+          btn.addEventListener('click', () => submitEli(n, btn));
           row.appendChild(btn);
         });
       }
@@ -2711,7 +2711,7 @@
       document.getElementById('e-feedback').textContent = '';
     }
 
-    function processEliOutcome(isCorrect) {
+    function processEliOutcome(isCorrect, wrongBtn) {
       const fb = document.getElementById('e-feedback');
       if (isCorrect) {
         playCorrect();
@@ -2734,13 +2734,18 @@
         document.getElementById('e-streak-emoji').textContent = '🔥';
         fb.textContent = `${i18n[lang].wrong} ${eState.current.answer}`;
         fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
-        // Leave the question up so the kid can try again; no auto-advance on a miss.
+        // Lock the tapped wrong option so repeated taps don't replay the chime;
+        // leave the rest of the question up so the kid can still pick the right one.
+        if (wrongBtn) {
+          wrongBtn.disabled = true;
+          wrongBtn.classList.add('opacity-40', 'pointer-events-none');
+        }
       }
     }
 
-    function submitEli(choice) {
+    function submitEli(choice, btn) {
       if (!eState.current) return;
-      processEliOutcome(choice === eState.current.answer);
+      processEliOutcome(choice === eState.current.answer, btn);
     }
 
     document.getElementById('e-back-btn').addEventListener('click', () => showScreen('eli-menu'));
