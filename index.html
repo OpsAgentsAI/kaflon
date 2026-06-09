@@ -27,6 +27,44 @@
     .pop { animation: pop 0.3s ease-out; }
     /* Math expressions stay LTR even in RTL layouts */
     .math { direction: ltr; unicode-bidi: isolate; }
+    /* ---------- 3D play cube (Eliyahu dice drill) ---------- */
+    .dice-scene { perspective: 600px; display: inline-block; }
+    .dice3d {
+      position: relative; width: 96px; height: 96px;
+      transform-style: preserve-3d;
+      transform: rotateX(-22deg) rotateY(28deg);
+    }
+    .dice3d.rolling { animation: dice-roll 0.6s ease-out; }
+    @keyframes dice-roll {
+      0%   { transform: rotateX(-380deg) rotateY(420deg) scale(0.7); }
+      100% { transform: rotateX(-22deg)  rotateY(28deg)  scale(1); }
+    }
+    .dice-face {
+      position: absolute; width: 96px; height: 96px;
+      background: #fff; border: 3px solid #1e293b; border-radius: 16px;
+      box-sizing: border-box; padding: 12px;
+      display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+      gap: 4px;
+    }
+    .dice-pip { width: 14px; height: 14px; border-radius: 50%; background: #1e293b; align-self: center; justify-self: center; }
+    /* Cube faces positioned in 3D; the front face carries the question value. */
+    .df-front  { transform: translateZ(48px); }
+    .df-back   { transform: rotateY(180deg) translateZ(48px); }
+    .df-right  { transform: rotateY(90deg)  translateZ(48px); }
+    .df-left   { transform: rotateY(-90deg) translateZ(48px); }
+    .df-top    { transform: rotateX(90deg)  translateZ(48px); }
+    .df-bottom { transform: rotateX(-90deg) translateZ(48px); }
+    /* Flat mini-dice used inside the choice buttons (number→face mode) */
+    .dice-mini { position: static; width: 56px; height: 56px; border: 3px solid #1e293b; border-radius: 12px; padding: 7px; gap: 3px; }
+    .dice-mini .dice-pip { width: 9px; height: 9px; }
+    /* Pip layouts — which of the 9 grid cells are filled, per face value */
+    .pips-1 > :nth-child(5) { visibility: visible; }
+    .pips-2 > :nth-child(1), .pips-2 > :nth-child(9) { visibility: visible; }
+    .pips-3 > :nth-child(1), .pips-3 > :nth-child(5), .pips-3 > :nth-child(9) { visibility: visible; }
+    .pips-4 > :nth-child(1), .pips-4 > :nth-child(3), .pips-4 > :nth-child(7), .pips-4 > :nth-child(9) { visibility: visible; }
+    .pips-5 > :nth-child(1), .pips-5 > :nth-child(3), .pips-5 > :nth-child(5), .pips-5 > :nth-child(7), .pips-5 > :nth-child(9) { visibility: visible; }
+    .pips-6 > :nth-child(1), .pips-6 > :nth-child(3), .pips-6 > :nth-child(4), .pips-6 > :nth-child(6), .pips-6 > :nth-child(7), .pips-6 > :nth-child(9) { visibility: visible; }
+    .dice-face .dice-pip, .dice-mini .dice-pip { visibility: hidden; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex flex-col items-center p-4 pt-8">
@@ -220,6 +258,39 @@
 
       <button id="l-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
       <div id="l-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
+    </section>
+
+    <!-- ELIYAHU — curriculum menu (1st grade: recognising 1–6 on a play cube) -->
+    <section id="eli-menu" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
+      <div>
+        <h2 class="text-2xl font-black" data-i18n="pick-drill">איזה תרגיל היום?</h2>
+        <p class="text-sm text-slate-500 mt-1" data-i18n="eli-blurb">קוביית משחק — זיהוי כמויות מ-1 עד 6</p>
+      </div>
+      <div class="space-y-2" id="eli-modules"></div>
+    </section>
+
+    <!-- ELIYAHU DRILL — 3D play cube + multiple-choice (no typing for a 1st grader) -->
+    <section id="eli-drill" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="flex justify-between text-base">
+        <div class="bg-sky-50 rounded-full px-4 py-2">
+          <span data-i18n="score">ניקוד</span>: <span id="e-score" class="font-black text-sky-600">0</span>
+        </div>
+        <div class="bg-amber-50 rounded-full px-4 py-2">
+          <span data-i18n="streak">רצף</span>: <span id="e-streak" class="font-black text-amber-600">0</span> <span id="e-streak-emoji">🔥</span>
+        </div>
+      </div>
+
+      <p id="e-prompt" class="text-center text-lg font-bold text-slate-700">…</p>
+
+      <div class="bg-gradient-to-br from-sky-50 to-indigo-50 rounded-3xl py-8 px-4 flex items-center justify-center min-h-[160px] select-none">
+        <div id="e-stage"></div>
+      </div>
+
+      <!-- choice row — populated per question with number buttons or mini-dice -->
+      <div id="e-choice-row" class="grid grid-cols-3 gap-3"></div>
+
+      <button id="e-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
+      <div id="e-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
 
     <!-- GAME -->
@@ -460,6 +531,11 @@
         'libi-addsub': '+ and − up to 20',
         'libi-multdiv': '× and ÷ tables 2–10',
         'libi-fracpure': 'Fractions: + and −',
+        'eli-blurb': 'Play cube — recognising quantities 1 to 6',
+        'eli-pips': 'How many dots? 🎲',
+        'eli-num': 'Find the cube 🔢',
+        'eli-q-pips': 'How many dots are on the cube?',
+        'eli-q-num': 'Which cube shows this number?',
         'geometry': 'Geometry 📐',
         'geometry-blurb': 'Shapes — area, perimeter, formulas',
         'geo-formulas-title': 'Formula sheet',
@@ -543,6 +619,11 @@
         'libi-addsub': 'חיבור וחיסור עד 20',
         'libi-multdiv': 'לוחות כפל וחילוק 2–10',
         'libi-fracpure': 'שברים: חיבור וחיסור',
+        'eli-blurb': 'קוביית משחק — זיהוי כמויות מ-1 עד 6',
+        'eli-pips': 'כמה נקודות? 🎲',
+        'eli-num': 'מצא את הקובייה 🔢',
+        'eli-q-pips': 'כמה נקודות יש על הקובייה?',
+        'eli-q-num': 'איזו קובייה מראה את המספר הזה?',
         'geometry': 'גאומטריה 📐',
         'geometry-blurb': 'צורות — שטח, היקף, נוסחאות',
         'geo-formulas-title': 'דף נוסחאות',
@@ -626,6 +707,7 @@
       // re-render formulas only if the screen exists in DOM (always true post-boot)
       if (document.getElementById('geometry-formulas')) renderGeometryFormulas();
       if (document.getElementById('libi-modules')) renderLibiMenu();
+      if (document.getElementById('eli-modules')) renderEliMenu();
       // Re-render the active drill's question text so the lang toggle updates prose-around-numbers
       // for place-value / percent / measurements / circle / numberline prompts.
       rebuildActiveQuestionTexts();
@@ -669,13 +751,22 @@
       profiles = [
         { id: 'moshe', name: { he: 'משה', en: 'Moshe' }, gender: 'm', track: 'multiply-divide' },
         { id: 'ayala', name: { he: 'איילה', en: 'Ayala' }, gender: 'f', track: 'decimals' },
-        { id: 'libi',  name: { he: 'ליבי', en: 'Libi'  }, gender: 'f', track: 'libi' }
+        { id: 'libi',  name: { he: 'ליבי', en: 'Libi'  }, gender: 'f', track: 'libi' },
+        { id: 'eli',   name: { he: 'אליהו', en: 'Eliyahu' }, gender: 'm', track: 'eli' }
       ];
       localStorage.setItem('kaflon.profiles', JSON.stringify(profiles));
-    } else if (!profiles.some(p => p.id === 'libi')) {
-      // Forward-migrate existing localStorage: add Libi to returning users.
-      profiles.push({ id: 'libi', name: { he: 'ליבי', en: 'Libi' }, gender: 'f', track: 'libi' });
-      localStorage.setItem('kaflon.profiles', JSON.stringify(profiles));
+    } else {
+      // Forward-migrate existing localStorage: add newer profiles to returning users.
+      let migrated = false;
+      if (!profiles.some(p => p.id === 'libi')) {
+        profiles.push({ id: 'libi', name: { he: 'ליבי', en: 'Libi' }, gender: 'f', track: 'libi' });
+        migrated = true;
+      }
+      if (!profiles.some(p => p.id === 'eli')) {
+        profiles.push({ id: 'eli', name: { he: 'אליהו', en: 'Eliyahu' }, gender: 'm', track: 'eli' });
+        migrated = true;
+      }
+      if (migrated) localStorage.setItem('kaflon.profiles', JSON.stringify(profiles));
     }
 
     function saveProfiles() {
@@ -689,7 +780,7 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill'].forEach(s => {
+      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill', 'eli-menu', 'eli-drill'].forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.toggle('hidden', s !== id);
       });
@@ -710,6 +801,9 @@
       } else if (p.track === 'libi') {
         renderLibiMenu();
         showScreen('libi-menu');
+      } else if (p.track === 'eli') {
+        renderEliMenu();
+        showScreen('eli-menu');
       } else {
         // multiply-divide is the default
         loadBestForActive();
@@ -2481,6 +2575,176 @@
     });
     document.getElementById('l-back-btn').addEventListener('click', () => showScreen('libi-menu'));
 
+    // ---------- Eliyahu: 3D play-cube drill (1st grade, quantities 1–6) ----------
+    // Two modules, both multiple-choice (no typing for a 6-year-old):
+    //  • dice-pips   — show a cube face, kid taps the matching NUMBER
+    //  • dice-number — show a NUMBER, kid taps the matching cube face
+    // Generators are pure + language-neutral (pips/numbers carry no prose),
+    // so the lang toggle never has to re-render a dice question.
+
+    // Pick `count` distinct integers in 1..6 that include `answer`.
+    function diceChoices(answer, count) {
+      const pool = [1, 2, 3, 4, 5, 6].filter(n => n !== answer);
+      // Fisher–Yates shuffle the pool, take count-1, add the answer, shuffle again.
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = rand(0, i);
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      const choices = pool.slice(0, count - 1).concat(answer);
+      for (let i = choices.length - 1; i > 0; i--) {
+        const j = rand(0, i);
+        [choices[i], choices[j]] = [choices[j], choices[i]];
+      }
+      return choices;
+    }
+
+    // 1) dice-pips — show a cube face (1..6), choose the matching number
+    function genDicePips() {
+      const face = rand(1, 6);
+      return { face, answer: face, choices: diceChoices(face, 3), kind: 'dice-pips' };
+    }
+
+    // 2) dice-number — show a number (1..6), choose the matching cube face
+    function genDiceNumber() {
+      const face = rand(1, 6);
+      return { face, answer: face, choices: diceChoices(face, 3), kind: 'dice-number' };
+    }
+
+    // Build a pip grid (9 cells; CSS .pips-N reveals the right ones).
+    function pipGridHtml() {
+      return Array.from({ length: 9 }, () => '<span class="dice-pip"></span>').join('');
+    }
+    // A full 3D cube whose front face shows `face`; sibling faces give it depth.
+    function cube3dHtml(face) {
+      const faces = ['front', 'back', 'right', 'left', 'top', 'bottom'];
+      // Front shows the asked value; the rest get arbitrary-but-valid faces for looks.
+      const vals = { front: face, back: 7 - face, right: 2, left: 5, top: 3, bottom: 4 };
+      const inner = faces.map(f =>
+        `<div class="dice-face df-${f} pips-${vals[f]}">${pipGridHtml()}</div>`
+      ).join('');
+      return `<div class="dice-scene"><div class="dice3d rolling">${inner}</div></div>`;
+    }
+    // A flat mini-dice (used inside number→face choice buttons).
+    function miniDiceHtml(face) {
+      return `<div class="dice-face dice-mini pips-${face}">${pipGridHtml()}</div>`;
+    }
+
+    const ELI_MODULES = [
+      { key: 'pips', labelKey: 'eli-pips', gen: genDicePips },
+      { key: 'num',  labelKey: 'eli-num',  gen: genDiceNumber }
+    ];
+
+    const eState = { activeModule: null, current: null, score: 0, streak: 0, best: 0 };
+    function eBestKey() {
+      return `kaflon.profiles.eli.${eState.activeModule || 'unknown'}.best`;
+    }
+
+    function renderEliMenu() {
+      const list = document.getElementById('eli-modules');
+      if (!list) return;
+      list.innerHTML = '';
+      ELI_MODULES.forEach(m => {
+        const row = document.createElement('button');
+        row.className = 'w-full py-4 px-4 bg-gradient-to-r from-sky-500 to-indigo-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
+        const label = document.createElement('span');
+        label.textContent = i18n[lang][m.labelKey] || m.key;
+        const tag = document.createElement('span');
+        tag.className = 'text-lg';
+        tag.textContent = '▸';
+        row.appendChild(label);
+        row.appendChild(tag);
+        row.addEventListener('click', () => enterEliModule(m.key));
+        list.appendChild(row);
+      });
+    }
+
+    function enterEliModule(key) {
+      const mod = ELI_MODULES.find(m => m.key === key);
+      if (!mod) return;
+      eState.activeModule = key;
+      eState.score = 0;
+      eState.streak = 0;
+      eState.best = parseInt(localStorage.getItem(eBestKey()) || '0', 10);
+      document.getElementById('e-score').textContent = '0';
+      document.getElementById('e-streak').textContent = '0';
+      document.getElementById('e-streak-emoji').textContent = '🔥';
+      showScreen('eli-drill');
+      nextEliQuestion();
+    }
+
+    function renderEliQuestion(q) {
+      const stage = document.getElementById('e-stage');
+      const prompt = document.getElementById('e-prompt');
+      const row = document.getElementById('e-choice-row');
+      row.innerHTML = '';
+      if (q.kind === 'dice-pips') {
+        prompt.textContent = i18n[lang]['eli-q-pips'];
+        stage.innerHTML = cube3dHtml(q.face);
+        // Choices are numbers.
+        q.choices.forEach(n => {
+          const btn = document.createElement('button');
+          btn.className = 'e-choice-btn math py-6 bg-sky-50 hover:bg-sky-100 rounded-2xl font-black text-5xl active:scale-95 transition';
+          btn.textContent = n;
+          btn.addEventListener('click', () => submitEli(n));
+          row.appendChild(btn);
+        });
+      } else {
+        prompt.textContent = i18n[lang]['eli-q-num'];
+        stage.innerHTML = `<div class="math text-7xl font-black text-indigo-600">${q.face}</div>`;
+        // Choices are mini-dice faces.
+        q.choices.forEach(n => {
+          const btn = document.createElement('button');
+          btn.className = 'e-choice-btn flex items-center justify-center py-4 bg-sky-50 hover:bg-sky-100 rounded-2xl active:scale-95 transition';
+          btn.innerHTML = miniDiceHtml(n);
+          btn.addEventListener('click', () => submitEli(n));
+          row.appendChild(btn);
+        });
+      }
+    }
+
+    function nextEliQuestion() {
+      const mod = ELI_MODULES.find(m => m.key === eState.activeModule);
+      if (!mod) return;
+      const q = mod.gen();
+      eState.current = q;
+      renderEliQuestion(q);
+      document.getElementById('e-feedback').textContent = '';
+    }
+
+    function processEliOutcome(isCorrect) {
+      const fb = document.getElementById('e-feedback');
+      if (isCorrect) {
+        playCorrect();
+        eState.score++;
+        eState.streak++;
+        if (eState.streak > eState.best) {
+          eState.best = eState.streak;
+          localStorage.setItem(eBestKey(), eState.best);
+        }
+        document.getElementById('e-score').textContent = eState.score;
+        document.getElementById('e-streak').textContent = eState.streak;
+        document.getElementById('e-streak-emoji').textContent = streakEmoji(eState.streak);
+        fb.textContent = i18n[lang].correct;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-green-600';
+        setTimeout(nextEliQuestion, 800);
+      } else {
+        playWrong();
+        eState.streak = 0;
+        document.getElementById('e-streak').textContent = '0';
+        document.getElementById('e-streak-emoji').textContent = '🔥';
+        fb.textContent = `${i18n[lang].wrong} ${eState.current.answer}`;
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
+        // Leave the question up so the kid can try again; no auto-advance on a miss.
+      }
+    }
+
+    function submitEli(choice) {
+      if (!eState.current) return;
+      processEliOutcome(choice === eState.current.answer);
+    }
+
+    document.getElementById('e-back-btn').addEventListener('click', () => showScreen('eli-menu'));
+
     // ---------- testability surface ----------
     // Exposes pure generator functions for tests.html. Not used by the app
     // itself. Adds zero kilobytes to network when devtools is closed; safe
@@ -2500,8 +2764,12 @@
         compareWhole: genCompareWhole,
         addsub20: genAddSub20,
         multdiv20: genMultDiv20,
-        fractionsPure: genFractionsPure
+        fractionsPure: genFractionsPure,
+        dicePips: genDicePips,
+        diceNumber: genDiceNumber
       },
+      diceChoices,
+      ELI_MODULES,
       rand,
       PLACES,
       DECIMAL_MODULES,
