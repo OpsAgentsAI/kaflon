@@ -730,6 +730,14 @@
         const tpl = i18n[lang]['numberline-prompt'] || 'Tap where {value} goes';
         np.textContent = tpl.replace('{value}', '');
       }
+      // Eliyahu dice drill: keep the in-drill prompt in sync on language toggle
+      // (mirrors the entry-path render in renderEliQuestion). Mode-1 = dice-pips, mode-2 = number.
+      const ep = document.getElementById('e-prompt');
+      if (ep && eState && eState.current) {
+        ep.textContent = eState.current.kind === 'dice-pips'
+          ? i18n[lang]['eli-q-pips']
+          : i18n[lang]['eli-q-num'];
+      }
     }
 
     document.getElementById('lang-toggle').addEventListener('click', () => {
