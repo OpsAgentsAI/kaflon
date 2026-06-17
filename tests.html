@@ -735,6 +735,55 @@
         assert(fmt.questionText === '0.3 = ?/10', 'passthrough broken: ' + fmt.questionText);
       });
 
+      // ------ M2: Libi tutorial mode ------
+      test('tutorial.STEPS is the 4-step explain→example→guided→ready sequence', () => {
+        assert(K.tutorial && Array.isArray(K.tutorial.STEPS), 'tutorial.STEPS missing');
+        assert(K.tutorial.STEPS.join(',') === 'explain,example,guided,ready',
+          'unexpected steps: ' + K.tutorial.STEPS.join(','));
+      });
+
+      test('tutorial.advance walks the steps in order then returns null at the end', () => {
+        assert(K.tutorial.advance('explain') === 'example', 'explain→example broke');
+        assert(K.tutorial.advance('example') === 'guided', 'example→guided broke');
+        assert(K.tutorial.advance('guided') === 'ready', 'guided→ready broke');
+        assert(K.tutorial.advance('ready') === null, 'ready should advance to null (exit to drill)');
+      });
+
+      test('tutorial.advance returns null for unknown/invalid step', () => {
+        assert(K.tutorial.advance('nope') === null, 'unknown step should be null');
+        assert(K.tutorial.advance('') === null, 'empty step should be null');
+        assert(K.tutorial.advance(undefined) === null, 'undefined step should be null');
+      });
+
+      test('every Libi M1 module has authored tutorial content (emoji + HE/EN explain + HE/EN hint)', () => {
+        K.LIBI_MODULES.forEach(m => {
+          const c = K.tutorial.content[m.key];
+          assert(c, 'no tutorial content for module: ' + m.key);
+          assert(c.emoji && c.emoji.length > 0, 'no emoji for: ' + m.key);
+          ['explainHe', 'explainEn', 'hintHe', 'hintEn'].forEach(f => {
+            assert(typeof c[f] === 'string' && c[f].trim().length > 0, m.key + ' missing ' + f);
+          });
+        });
+      });
+
+      test('tutorial explanations are real kid-language prose (>= 25 words) in the right script', () => {
+        Object.keys(K.tutorial.content).forEach(key => {
+          const c = K.tutorial.content[key];
+          assert(c.explainHe.split(/\s+/).length >= 25, key + ' HE explain too short');
+          assert(c.explainEn.split(/\s+/).length >= 25, key + ' EN explain too short');
+          assert(/[֐-׿]/.test(c.explainHe), key + ' HE explain has no Hebrew');
+          assert(!/[֐-׿]/.test(c.explainEn), key + ' EN explain leaked Hebrew');
+        });
+      });
+
+      test('tutorial.answerString renders the correct answer per question kind', () => {
+        assert(K.tutorial.answerString({ kind: 'compare-whole', a: 3, b: 8, operator: '<' }) === '3 < 8',
+          'compare answerString wrong');
+        assert(K.tutorial.answerString({ kind: 'addsub-20', answer: 11 }) === '11', 'number answerString wrong');
+        assert(K.tutorial.answerString({ kind: 'fractions-pure', answerNum: 3, answerDen: 5 }) === '3/5',
+          'fraction answerString wrong');
+      });
+
       finish();
     }
 
