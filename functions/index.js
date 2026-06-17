@@ -54,9 +54,43 @@ const SYSTEM_SUBJECTS = [
 // onRequest seeder was removed (anyone with the URL could overwrite the shared
 // subjects collection). Re-add ONLY as an isAdmin()-gated onCall if needed.
 
+// Per-user daily cap on AI subject generation. kaflonAgent both (a) calls Vertex
+// (cost) and (b) writes into the GLOBAL shared `subjects` library that every user
+// reads — so an unbounded authenticated caller (open Google + email/pw signup)
+// could run up Vertex cost AND pollute the shared library for everyone. This cap
+// bounds both vectors. The counter doc lives at `agentUsage/{uid}` and is written
+// ONLY by this Admin-SDK function; clients are default-denied by firestore.rules.
+const AGENT_DAILY_LIMIT = 20;
+
+async function enforceAgentRateLimit(uid) {
+  const ref = db.collection('agentUsage').doc(uid);
+  const today = new Date().toISOString().slice(0, 10); // UTC YYYY-MM-DD
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : null;
+    const used = data && data.date === today ? (data.count || 0) : 0;
+    if (used >= AGENT_DAILY_LIMIT) {
+      throw new HttpsError(
+        'resource-exhausted',
+        `Daily limit of ${AGENT_DAILY_LIMIT} AI subject generations reached. Try again tomorrow.`
+      );
+    }
+    tx.set(ref, {
+      date: today,
+      count: used + 1,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  });
+}
+
 // Kaflon agent — generates a new subject with starter questions
 exports.kaflonAgent = onCall({ region: 'us-central1' }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+
+  // Bound Vertex cost + shared-library pollution: per-user/day cap, checked
+  // (and incremented) BEFORE the expensive Vertex call so abusive/failed calls
+  // still consume quota.
+  await enforceAgentRateLimit(request.auth.uid);
 
   const { subjectNameHe, subjectNameEn, description, gradeLevel } = request.data;
   if (!subjectNameHe && !subjectNameEn) {
