@@ -260,6 +260,49 @@
       <div id="l-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
     </section>
 
+    <!-- LIBI TUTORIAL — 4-step guided flow (M2): explain → worked example → guided practice → ready -->
+    <section id="libi-tutorial" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-5">
+      <div class="flex justify-between items-center">
+        <h2 id="tut-title" class="text-xl font-black">…</h2>
+        <span id="tut-progress" class="text-sm font-bold text-slate-400" style="direction:ltr;">1 / 4</span>
+      </div>
+      <div id="tut-emoji" class="text-6xl text-center select-none">💡</div>
+      <div id="tut-text" class="text-lg leading-relaxed text-slate-700 text-center"></div>
+
+      <!-- worked-example / guided question display -->
+      <div id="tut-question-wrap" class="hidden bg-gradient-to-br from-rose-50 to-pink-50 rounded-3xl py-6 px-4 text-center select-none">
+        <div id="tut-question" class="math text-4xl sm:text-5xl font-black" style="direction:ltr;">…</div>
+        <div id="tut-answer-reveal" class="hidden mt-3 text-3xl font-black text-green-600"></div>
+      </div>
+      <div id="tut-why" class="hidden text-base text-slate-600 text-center"></div>
+
+      <!-- guided practice inputs (shown only on the guided step; one row per module kind) -->
+      <div id="tut-guided" class="hidden space-y-3">
+        <div id="tut-number-row" class="hidden">
+          <input id="tut-answer-num" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-full text-4xl text-center py-4 border-4 border-rose-200 rounded-2xl focus:border-rose-500 outline-none font-black" placeholder="?">
+        </div>
+        <div id="tut-choice-row" class="hidden grid grid-cols-3 gap-2">
+          <button data-tchoice="-1" class="tut-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-4xl active:scale-95 transition">&lt;</button>
+          <button data-tchoice="0" class="tut-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-4xl active:scale-95 transition">=</button>
+          <button data-tchoice="1" class="tut-choice-btn math py-6 bg-purple-50 hover:bg-purple-100 rounded-2xl font-black text-4xl active:scale-95 transition">&gt;</button>
+        </div>
+        <div id="tut-fraction-row" class="hidden">
+          <div class="flex flex-col items-center gap-2 max-w-xs mx-auto">
+            <input id="tut-num" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-28 text-3xl text-center py-2 border-4 border-rose-200 rounded-2xl focus:border-rose-500 outline-none font-black" placeholder="?">
+            <div class="h-1 w-28 bg-slate-800 rounded"></div>
+            <input id="tut-den" type="number" inputmode="numeric" autocomplete="off" class="answer-input w-28 text-3xl text-center py-2 border-4 border-rose-200 rounded-2xl focus:border-rose-500 outline-none font-black" placeholder="?">
+          </div>
+        </div>
+        <button id="tut-check-btn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="tut-check">בדיקה ✓</button>
+        <button id="tut-hint-btn" class="hidden w-full py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-2xl font-bold text-base active:scale-95 transition" data-i18n="tut-hint-btn">רוצה רמז? 💡</button>
+        <div id="tut-hint" class="hidden text-base text-amber-700 bg-amber-50 rounded-2xl p-3 text-center"></div>
+        <div id="tut-feedback" class="text-center font-bold text-lg min-h-[28px]"></div>
+      </div>
+
+      <button id="tut-next-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg shadow-md active:scale-95 transition" data-i18n="tut-next">המשך →</button>
+      <button id="tut-back-btn" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-sm active:scale-95 transition" data-i18n="back-to-menu">תפריט</button>
+    </section>
+
     <!-- ELIYAHU — curriculum menu (1st grade: recognising 1–6 on a play cube) -->
     <section id="eli-menu" class="hidden bg-white rounded-3xl shadow-xl p-6 space-y-4">
       <div>
@@ -531,6 +574,20 @@
         'libi-addsub': '+ and − up to 20',
         'libi-multdiv': '× and ÷ tables 2–10',
         'libi-fracpure': 'Fractions: + and −',
+        'libi-mode-drill': '📝 Practice',
+        'libi-mode-learn': '💡 Learn',
+        'tut-step-explain': "Let's learn",
+        'tut-step-example': 'Watch one',
+        'tut-step-guided': 'Your turn',
+        'tut-step-ready': 'Ready!',
+        'tut-next': 'Next →',
+        'tut-check': 'Check ✓',
+        'tut-hint-btn': 'Need a hint? 💡',
+        'tut-answer-label': 'Answer',
+        'tut-ready-msg': "Nice — you've got it! Now practise on your own. The drill keeps a score and a streak. 🔥",
+        'tut-start-drill': "I'm ready, let's go! 🚀",
+        'tut-try-again': 'Almost — try once more',
+        'tut-correct': 'Correct! 🎉 Tap Next →',
         'eli-blurb': 'Play cube — recognising quantities 1 to 6',
         'eli-pips': 'How many dots? 🎲',
         'eli-num': 'Find the cube 🔢',
@@ -619,6 +676,20 @@
         'libi-addsub': 'חיבור וחיסור עד 20',
         'libi-multdiv': 'לוחות כפל וחילוק 2–10',
         'libi-fracpure': 'שברים: חיבור וחיסור',
+        'libi-mode-drill': '📝 תרגול',
+        'libi-mode-learn': '💡 הסבר',
+        'tut-step-explain': 'לומדים',
+        'tut-step-example': 'מסתכלים על דוגמה',
+        'tut-step-guided': 'תורך',
+        'tut-step-ready': 'מוכנים!',
+        'tut-next': 'המשך →',
+        'tut-check': 'בדיקה ✓',
+        'tut-hint-btn': 'רוצה רמז? 💡',
+        'tut-answer-label': 'תשובה',
+        'tut-ready-msg': 'יופי — הבנת! עכשיו תרגול לבד. בדריל יש ניקוד ורצף. 🔥',
+        'tut-start-drill': 'מוכנה, קדימה! 🚀',
+        'tut-try-again': 'כמעט — נסי עוד פעם',
+        'tut-correct': 'נכון! 🎉 לחצי המשך →',
         'eli-blurb': 'קוביית משחק — זיהוי כמויות מ-1 עד 6',
         'eli-pips': 'כמה נקודות? 🎲',
         'eli-num': 'מצא את הקובייה 🔢',
@@ -707,6 +778,11 @@
       // re-render formulas only if the screen exists in DOM (always true post-boot)
       if (document.getElementById('geometry-formulas')) renderGeometryFormulas();
       if (document.getElementById('libi-modules')) renderLibiMenu();
+      // Re-paint a live tutorial so its dynamic prose/hint follow the language toggle.
+      if (typeof paintTutorialStep === 'function' && tutState.moduleKey &&
+          !document.getElementById('libi-tutorial').classList.contains('hidden')) {
+        paintTutorialStep();
+      }
       if (document.getElementById('eli-modules')) renderEliMenu();
       // Re-render the active drill's question text so the lang toggle updates prose-around-numbers
       // for place-value / percent / measurements / circle / numberline prompts.
@@ -788,7 +864,7 @@
     }
 
     function showScreen(id) {
-      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill', 'eli-menu', 'eli-drill'].forEach(s => {
+      ['profile-picker', 'settings', 'decimals-menu', 'game', 'decimal-drill', 'numberline-drill', 'geometry-menu', 'geometry-drill', 'libi-menu', 'libi-drill', 'libi-tutorial', 'eli-menu', 'eli-drill'].forEach(s => {
         const el = document.getElementById(s);
         if (el) el.classList.toggle('hidden', s !== id);
       });
@@ -2437,17 +2513,33 @@
       const list = document.getElementById('libi-modules');
       list.innerHTML = '';
       LIBI_MODULES.forEach(m => {
-        const row = document.createElement('button');
-        row.className = 'w-full py-4 px-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl flex items-center justify-between text-base font-bold active:scale-95 hover:shadow-lg transition';
-        const label = document.createElement('span');
+        const wrap = document.createElement('div');
+        wrap.className = 'bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl p-3 space-y-2 shadow-md';
+        const label = document.createElement('div');
+        label.className = 'font-bold text-base px-1';
         label.textContent = i18n[lang][m.labelKey] || m.key;
-        const tag = document.createElement('span');
-        tag.className = 'text-lg';
-        tag.textContent = '▸';
-        row.appendChild(label);
-        row.appendChild(tag);
-        row.addEventListener('click', () => enterLibiModule(m.key));
-        list.appendChild(row);
+        wrap.appendChild(label);
+        // Per-module mode toggle: Practice (drill) | Learn (guided tutorial)
+        const actions = document.createElement('div');
+        actions.className = 'grid grid-cols-2 gap-2';
+        const drillBtn = document.createElement('button');
+        drillBtn.className = 'libi-mode-btn py-3 min-h-[44px] bg-white/20 hover:bg-white/30 rounded-lg font-bold text-sm active:scale-95 transition';
+        drillBtn.textContent = i18n[lang]['libi-mode-drill'];
+        drillBtn.addEventListener('click', () => enterLibiModule(m.key));
+        const learnBtn = document.createElement('button');
+        learnBtn.className = 'libi-mode-btn py-3 min-h-[44px] bg-white/20 hover:bg-white/30 rounded-lg font-bold text-sm active:scale-95 transition';
+        learnBtn.textContent = i18n[lang]['libi-mode-learn'];
+        // Only modules with authored tutorial content offer Learn; all 4 M1 modules have it.
+        if (LIBI_TUTORIALS[m.key]) {
+          learnBtn.addEventListener('click', () => startLibiTutorial(m.key));
+          actions.appendChild(drillBtn);
+          actions.appendChild(learnBtn);
+        } else {
+          drillBtn.className = 'libi-mode-btn col-span-2 py-3 min-h-[44px] bg-white/20 hover:bg-white/30 rounded-lg font-bold text-sm active:scale-95 transition';
+          actions.appendChild(drillBtn);
+        }
+        wrap.appendChild(actions);
+        list.appendChild(wrap);
       });
     }
 
@@ -2472,12 +2564,14 @@
       nextLibiQuestion();
     }
 
-    function renderLibiQuestion(q) {
-      const qEl = document.getElementById('l-question');
+    // Shared question renderer — used by both the Libi drill and the tutorial.
+    // `tail` lets the tutorial worked-example show "= answer" instead of "= ?".
+    function setLibiQuestionEl(qEl, q, tail) {
+      const t = tail != null ? tail : '?';
       if (q.kind === 'compare-whole') {
         qEl.textContent = `${q.a} ☐ ${q.b}`;
       } else if (q.kind === 'addsub-20' || q.kind === 'multdiv-20') {
-        qEl.textContent = `${q.a} ${q.op} ${q.b} = ?`;
+        qEl.textContent = `${q.a} ${q.op} ${q.b} = ${t}`;
       } else if (q.kind === 'fractions-pure') {
         // Render as stacked fractions on a single line
         qEl.innerHTML =
@@ -2488,8 +2582,12 @@
           `<span style="display:inline-flex;flex-direction:column;align-items:center;font-size:0.85em;line-height:1;">` +
             `<span>${q.num2}</span><span style="border-top:3px solid currentColor;padding-top:0.05em;">${q.den2}</span>` +
           `</span>` +
-          ` = ?/?`;
+          ` = ${t === '?' ? '?/?' : t}`;
       }
+    }
+    function renderLibiQuestion(q) {
+      const qEl = document.getElementById('l-question');
+      setLibiQuestionEl(qEl, q);
       qEl.classList.add('pop');
       setTimeout(() => qEl.classList.remove('pop'), 300);
     }
@@ -2582,6 +2680,206 @@
       });
     });
     document.getElementById('l-back-btn').addEventListener('click', () => showScreen('libi-menu'));
+
+    // ---------- Libi tutorial mode (M2): explain → example → guided → ready ----------
+    // Pure, testable step machine. Exposed on window.__kaflon.tutorial for tests.html.
+    const TUTORIAL_STEPS = ['explain', 'example', 'guided', 'ready'];
+    function tutorialAdvance(step) {
+      const i = TUTORIAL_STEPS.indexOf(step);
+      if (i < 0 || i >= TUTORIAL_STEPS.length - 1) return null; // null → leave tutorial, start the drill
+      return TUTORIAL_STEPS[i + 1];
+    }
+
+    // Kid-language explanations (HE-first, ~50–80 words) + a strategy hint that does NOT give the answer.
+    const LIBI_TUTORIALS = {
+      compare: {
+        emoji: '⚖️',
+        explainHe: 'להשוות זה לבדוק מי גדול ומי קטן. הסימן < אומר "קטן מ", הסימן > אומר "גדול מ", והסימן = אומר "שווים". טריק קטן: הפה הפתוח של הסימן תמיד "בולע" את המספר הגדול. אז 3 < 8 — הפה פתוח לכיוון ה-8, כי 8 גדול יותר.',
+        explainEn: 'Comparing means checking which number is bigger and which is smaller. < means "less than", > means "greater than", and = means "equal". Little trick: the open mouth of the sign always "eats" the bigger number. So 3 < 8 — the mouth opens toward the 8, because 8 is bigger.',
+        hintHe: 'איזה מספר גדול יותר? הפה של הסימן תמיד פונה אל הגדול.',
+        hintEn: 'Which number is bigger? The mouth of the sign always faces the bigger one.'
+      },
+      addsub: {
+        emoji: '➕',
+        explainHe: 'חיבור זה לאסוף יחד: 6 + 5 זה לקחת 6 ולהוסיף עוד 5, אחד-אחד, עד שמגיעים ל-11. חיסור זה להוריד: 11 − 5 זה להתחיל מ-11 ולספור אחורה 5 צעדים. מותר להיעזר באצבעות או לדמיין קו מספרים שקופצים עליו.',
+        explainEn: 'Adding means gathering together: 6 + 5 is taking 6 and adding 5 more, one by one, until you reach 11. Subtracting means taking away: 11 − 5 starts at 11 and counts back 5 steps. You can use your fingers or imagine a number line you hop along.',
+        hintHe: 'בחיבור — תספרי קדימה. בחיסור — תספרי אחורה. אצבעות מותר!',
+        hintEn: 'For +, count forward. For −, count back. Fingers allowed!'
+      },
+      multdiv: {
+        emoji: '✖️',
+        explainHe: 'כפל זה חיבור חוזר: 4 × 3 אומר "4 שלוש פעמים" = 4 + 4 + 4 = 12. חילוק זה חלוקה לקבוצות שוות: 12 ÷ 3 שואל "לכמה קבוצות של 3 אפשר לחלק את 12?" — התשובה 4. כפל וחילוק הפוכים זה לזה: אם 4 × 3 = 12, אז 12 ÷ 3 = 4.',
+        explainEn: 'Multiplying is repeated adding: 4 × 3 means "4 three times" = 4 + 4 + 4 = 12. Dividing is splitting into equal groups: 12 ÷ 3 asks "how many groups of 3 fit in 12?" — the answer is 4. Multiply and divide are opposites: if 4 × 3 = 12, then 12 ÷ 3 = 4.',
+        hintHe: 'כפל = חיבור חוזר. חילוק = כמה קבוצות שוות נכנסות. הם הפוכים זה לזה.',
+        hintEn: 'Multiply = repeated adding. Divide = how many equal groups fit. They are opposites.'
+      },
+      fracpure: {
+        emoji: '🍕',
+        explainHe: 'שבר זה חלק מתוך שלם, כמו פרוסות פיצה. המספר למטה (מכנה) אומר לכמה חלקים חתכנו, והמספר למעלה (מונה) כמה לקחנו. כדי לחבר שברים עם אותו מכנה, מחברים רק את המונים והמכנה נשאר אותו דבר: 1/5 + 2/5 = 3/5.',
+        explainEn: 'A fraction is a part of a whole, like pizza slices. The bottom number (denominator) says into how many parts we cut, and the top number (numerator) how many we took. To add fractions with the same denominator, add only the tops and keep the denominator: 1/5 + 2/5 = 3/5.',
+        hintHe: 'אותו מכנה? חברי או חסרי רק את המספרים למעלה. המכנה נשאר.',
+        hintEn: 'Same denominator? Add or subtract only the top numbers. The denominator stays.'
+      }
+    };
+
+    const tutState = { moduleKey: null, step: 'explain', current: null, hintShown: false, solved: false };
+    function tutContent() { return LIBI_TUTORIALS[tutState.moduleKey]; }
+    function tutModule() { return LIBI_MODULES.find(m => m.key === tutState.moduleKey); }
+
+    // Correct-answer string for a Libi question (example reveal + guided check share this).
+    function libiAnswerString(q) {
+      if (q.kind === 'compare-whole') return `${q.a} ${q.operator} ${q.b}`;
+      if (q.kind === 'fractions-pure') return `${q.answerNum}/${q.answerDen}`;
+      return String(q.answer);
+    }
+
+    function startLibiTutorial(key) {
+      if (!LIBI_TUTORIALS[key]) { enterLibiModule(key); return; }
+      tutState.moduleKey = key;
+      tutState.current = null;
+      tutState.hintShown = false;
+      tutState.solved = false;
+      showScreen('libi-tutorial');
+      enterTutStep('explain');
+    }
+
+    // enter = transition into a step (generates a fresh question where needed); paint = render from tutState.
+    // Split so the language toggle can re-paint the live tutorial without regenerating / losing progress.
+    function enterTutStep(step) {
+      tutState.step = step;
+      if (step === 'example' || step === 'guided') tutState.current = tutModule().gen();
+      if (step === 'guided') { tutState.hintShown = false; tutState.solved = false; }
+      paintTutorialStep();
+    }
+
+    function paintTutorialStep() {
+      const c = tutContent(); const mod = tutModule();
+      if (!c || !mod) return;
+      const T = i18n[lang]; const heLang = lang === 'he';
+      const qWrap = document.getElementById('tut-question-wrap');
+      const reveal = document.getElementById('tut-answer-reveal');
+      const guided = document.getElementById('tut-guided');
+      const next = document.getElementById('tut-next-btn');
+      const text = document.getElementById('tut-text');
+      const emoji = document.getElementById('tut-emoji');
+      qWrap.classList.add('hidden'); reveal.classList.add('hidden');
+      guided.classList.add('hidden'); next.classList.remove('hidden');
+      emoji.textContent = c.emoji;
+      const idx = TUTORIAL_STEPS.indexOf(tutState.step);
+      document.getElementById('tut-progress').textContent = `${idx + 1} / ${TUTORIAL_STEPS.length}`;
+
+      if (tutState.step === 'explain') {
+        document.getElementById('tut-title').textContent = T['tut-step-explain'];
+        text.textContent = heLang ? c.explainHe : c.explainEn;
+        next.textContent = T['tut-next'];
+      } else if (tutState.step === 'example') {
+        document.getElementById('tut-title').textContent = T['tut-step-example'];
+        text.textContent = '';
+        qWrap.classList.remove('hidden');
+        setLibiQuestionEl(document.getElementById('tut-question'), tutState.current);
+        reveal.classList.remove('hidden');
+        reveal.textContent = `✓ ${libiAnswerString(tutState.current)}`;
+        next.textContent = T['tut-next'];
+      } else if (tutState.step === 'guided') {
+        document.getElementById('tut-title').textContent = T['tut-step-guided'];
+        text.textContent = '';
+        qWrap.classList.remove('hidden');
+        setLibiQuestionEl(document.getElementById('tut-question'), tutState.current);
+        guided.classList.remove('hidden');
+        document.getElementById('tut-number-row').classList.toggle('hidden', mod.kind !== 'number');
+        document.getElementById('tut-choice-row').classList.toggle('hidden', mod.kind !== 'choice');
+        document.getElementById('tut-fraction-row').classList.toggle('hidden', mod.kind !== 'fraction');
+        const hint = document.getElementById('tut-hint');
+        hint.textContent = heLang ? c.hintHe : c.hintEn;
+        // hint button appears only after a wrong attempt; the hint text only after they tap it
+        document.getElementById('tut-hint-btn').classList.toggle('hidden', !tutState.hintShown);
+        hint.classList.add('hidden');
+        const fb = document.getElementById('tut-feedback');
+        document.getElementById('tut-check-btn').classList.toggle('hidden', tutState.solved);
+        if (tutState.solved) {
+          fb.textContent = T['tut-correct'];
+          fb.className = 'text-center font-bold text-lg min-h-[28px] text-green-600';
+          next.textContent = T['tut-next'];
+        } else {
+          fb.textContent = ''; fb.className = 'text-center font-bold text-lg min-h-[28px]';
+          next.classList.add('hidden'); // can't advance until solved
+          if (mod.kind === 'number') document.getElementById('tut-answer-num').focus();
+          else if (mod.kind === 'fraction') document.getElementById('tut-num').focus();
+        }
+      } else if (tutState.step === 'ready') {
+        document.getElementById('tut-title').textContent = T['tut-step-ready'];
+        emoji.textContent = '🚀';
+        text.textContent = T['tut-ready-msg'];
+        next.textContent = T['tut-start-drill'];
+      }
+    }
+
+    function tutCheckGuided(isCorrect) {
+      const fb = document.getElementById('tut-feedback');
+      if (isCorrect) {
+        playCorrect();
+        tutState.solved = true;
+        fb.textContent = i18n[lang]['tut-correct'];
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-green-600';
+        document.getElementById('tut-check-btn').classList.add('hidden');
+        document.getElementById('tut-hint-btn').classList.add('hidden');
+        const next = document.getElementById('tut-next-btn');
+        next.classList.remove('hidden');
+        next.textContent = i18n[lang]['tut-next'];
+      } else {
+        playWrong();
+        tutState.hintShown = true; // reveal the hint *button* (text stays hidden until tapped)
+        fb.textContent = i18n[lang]['tut-try-again'];
+        fb.className = 'text-center font-bold text-lg min-h-[28px] text-red-600';
+        document.getElementById('tut-hint-btn').classList.remove('hidden');
+      }
+    }
+
+    function tutSubmitGuided() {
+      const q = tutState.current; const mod = tutModule();
+      if (!q || !mod || tutState.solved) return;
+      if (mod.kind === 'number') {
+        const raw = document.getElementById('tut-answer-num').value.trim();
+        if (raw === '') return;
+        const v = parseInt(raw, 10);
+        if (isNaN(v)) return;
+        tutCheckGuided(v === q.answer);
+      } else if (mod.kind === 'fraction') {
+        const ns = document.getElementById('tut-num').value.trim();
+        const ds = document.getElementById('tut-den').value.trim();
+        if (ns === '' || ds === '') return;
+        const n = parseInt(ns, 10), d = parseInt(ds, 10);
+        if (isNaN(n) || isNaN(d) || d === 0) return;
+        tutCheckGuided(n * q.answerDen === d * q.answerNum);
+      }
+    }
+
+    function tutNext() {
+      const nextStep = tutorialAdvance(tutState.step);
+      if (nextStep === null) { enterLibiModule(tutState.moduleKey); return; } // → real drill
+      enterTutStep(nextStep);
+    }
+
+    document.getElementById('tut-next-btn').addEventListener('click', tutNext);
+    document.getElementById('tut-back-btn').addEventListener('click', () => showScreen('libi-menu'));
+    document.getElementById('tut-check-btn').addEventListener('click', tutSubmitGuided);
+    document.getElementById('tut-answer-num').addEventListener('keydown', e => { if (e.key === 'Enter') tutSubmitGuided(); });
+    ['tut-num', 'tut-den'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') tutSubmitGuided(); });
+    });
+    document.getElementById('tut-hint-btn').addEventListener('click', () => {
+      document.getElementById('tut-hint').classList.remove('hidden');
+      document.getElementById('tut-hint-btn').classList.add('hidden');
+    });
+    document.querySelectorAll('.tut-choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const q = tutState.current;
+        if (!q || q.kind !== 'compare-whole' || tutState.solved) return;
+        const v = parseInt(btn.dataset.tchoice, 10);
+        const op = v === -1 ? '<' : v === 1 ? '>' : '=';
+        tutCheckGuided(op === q.operator);
+      });
+    });
 
     // ---------- Eliyahu: 3D play-cube drill (1st grade, quantities 1–6) ----------
     // Two modules, both multiple-choice (no typing for a 6-year-old):
@@ -2789,6 +3087,13 @@
       GEO_SHAPES,
       GEO_PI,
       LIBI_MODULES,
+      // M2 tutorial mode — tests assert on the step machine + per-module content coverage.
+      tutorial: {
+        STEPS: TUTORIAL_STEPS,
+        advance: tutorialAdvance,
+        content: LIBI_TUTORIALS,
+        answerString: libiAnswerString
+      },
       // P2.2 numberline UI constants (tests assert on the tolerance contract)
       NL_TOLERANCE,
       // i18n surface — tests assert that lang toggles re-render drill prompts
