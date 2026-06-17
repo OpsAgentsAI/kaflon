@@ -92,11 +92,13 @@
         }
       });
 
-      test('genPlaceValue carries kind + subQuestion', () => {
+      test('genPlaceValue carries kind + placeKey for lang-agnostic rebuild', () => {
         for (let i = 0; i < 20; i++) {
           const q = K.gen.placeValue();
           assert(q.kind === 'place-value', 'bad kind: ' + q.kind);
-          assert(q.subQuestion && q.subQuestion.length > 0, 'empty subQuestion');
+          assert(['tenths', 'hundredths', 'thousandths'].includes(q.placeKey),
+            'bad placeKey: ' + q.placeKey);
+          assert(q.num && q.num.length === 5, 'bad num: ' + q.num);
         }
       });
 
@@ -217,7 +219,10 @@
           assert(q.kind === 'measurements', 'wrong kind: ' + q.kind);
           assert(typeof q.answer === 'number' && isFinite(q.answer) && q.answer > 0,
                  'bad answer: ' + q.answer);
-          assert(/= \? /.test(q.questionText), 'malformed prompt: ' + q.questionText);
+          assert(['m', 'cm', 'mm'].includes(q.fromKey) && ['m', 'cm', 'mm'].includes(q.toKey),
+            'bad fromKey/toKey: ' + q.fromKey + '/' + q.toKey);
+          const en = K.formatQuestion(q, 'en').questionText;
+          assert(/= \? /.test(en), 'malformed prompt: ' + en);
         }
       });
 
@@ -227,7 +232,7 @@
           const q = K.gen.percentWhole();
           assert(q.kind === 'percent-whole', 'wrong kind: ' + q.kind);
           assert(Number.isInteger(q.answer),
-                 'answer is not integer: ' + q.answer + ' from: ' + q.questionText);
+                 'answer is not integer: ' + q.answer + ' from p=' + q.p + ' base=' + q.base);
         }
       });
 
@@ -235,8 +240,7 @@
         const seen = new Set();
         for (let i = 0; i < 500; i++) {
           const q = K.gen.percentWhole();
-          const m = q.questionText.match(/(\d+)%/);
-          if (m) seen.add(parseInt(m[1], 10));
+          seen.add(q.p);
         }
         const allowed = new Set([10, 20, 25, 50, 75, 100]);
         for (const p of seen) {
@@ -255,6 +259,8 @@
           const scaled = Math.round(q.answer * 100);
           assert(Math.abs(scaled - q.answer * 100) < 1e-9,
                  'answer not ≤2dp: ' + q.answer);
+          assert(typeof q.p === 'number' && typeof q.baseStr === 'string',
+            'missing rebuild params p/baseStr');
         }
       });
 
@@ -286,6 +292,83 @@
           assert(ansDp <= q.aDp + q.bDp,
                  `place-value rule violated: ${ansStr} has ${ansDp} dp; aDp+bDp=${q.aDp+q.bDp}`);
         }
+      });
+
+      // ------ genMulDec "free" / "ללא הגבלה" mode ------
+      // Ayala's unlimited boss mode: factors are ≥1, each independently 1–3 dp.
+      // Answer arithmetic is still exact; place-value rule still holds.
+      test('genMulDec free mode picks 1–3 dp per factor and integer part ≥ 1', () => {
+        const prev = K.dState.submode;
+        K.dState.submode = 'mul-dec-free';
+        try {
+          let sawDp1 = false, sawDp2 = false, sawDp3 = false;
+          for (let i = 0; i < 400; i++) {
+            const q = K.gen.mulDec();
+            assert(q.aDp >= 1 && q.aDp <= 3, 'aDp out of 1..3: ' + q.aDp);
+            assert(q.bDp >= 1 && q.bDp <= 3, 'bDp out of 1..3: ' + q.bDp);
+            if (q.aDp === 1 || q.bDp === 1) sawDp1 = true;
+            if (q.aDp === 2 || q.bDp === 2) sawDp2 = true;
+            if (q.aDp === 3 || q.bDp === 3) sawDp3 = true;
+            const m = q.questionText.match(/^(\d+\.\d+) × (\d+\.\d+) = \?$/);
+            assert(m, 'malformed prompt: ' + q.questionText);
+            const a = parseFloat(m[1]);
+            const b = parseFloat(m[2]);
+            // Free mode integer part is 1..9 — factors must be ≥1 (no leading 0.X)
+            assert(a >= 1 && b >= 1, 'free-mode factor < 1: ' + q.questionText);
+            // Place-value rule still holds (totalDp scale; tolerance for float)
+            assert(Math.abs(q.answer - a * b) < 1e-6,
+                   `answer mismatch: ${q.answer} vs ${a}*${b}=${a*b}`);
+            // Answer's dp ≤ aDp + bDp (max 6)
+            const ansStr = q.answer.toString();
+            const dotIdx = ansStr.indexOf('.');
+            const ansDp = dotIdx === -1 ? 0 : ansStr.length - dotIdx - 1;
+            assert(ansDp <= q.aDp + q.bDp,
+                   `place-value rule violated: ${ansStr} (${ansDp} dp) > aDp+bDp=${q.aDp+q.bDp}`);
+          }
+          assert(sawDp1, '1 dp factor never sampled');
+          assert(sawDp2, '2 dp factor never sampled');
+          assert(sawDp3, '3 dp factor never sampled');
+        } finally {
+          K.dState.submode = prev;
+        }
+      });
+
+      // ------ genDivDec (P3.4) — Ayala's "חילוק מספרים עשרוניים" / decimal ÷ decimal ------
+      // Built from the answer side: quotient q (≤3 dp) × divisor b = dividend a.
+      // Contract: clean (terminating) quotient, dividend dp ≤ 6, a/b === q.
+      test('genDivDec: quotient ≤3 dp, dividend dp ≤6, a÷b equals the answer, all dp sampled', () => {
+        let sawDp1 = false, sawDp2 = false, sawDp3 = false;
+        for (let i = 0; i < 400; i++) {
+          const q = K.gen.divDec();
+          assert(q.kind === 'div-dec', 'wrong kind: ' + q.kind);
+          // qDp is the quotient's precision — must be a clean ≤3 dp answer
+          assert(q.qDp >= 1 && q.qDp <= 3, 'qDp out of 1..3: ' + q.qDp);
+          assert(q.bDp >= 1 && q.bDp <= 3, 'bDp out of 1..3: ' + q.bDp);
+          // Dividend precision = qDp + bDp, must stay ≤ 6
+          assert(q.aDp === q.qDp + q.bDp, `aDp ${q.aDp} != qDp+bDp ${q.qDp + q.bDp}`);
+          assert(q.aDp <= 6, 'dividend dp > 6: ' + q.aDp);
+          if (q.bDp === 1) sawDp1 = true;
+          if (q.bDp === 2) sawDp2 = true;
+          if (q.bDp === 3) sawDp3 = true;
+          // Prompt shape: "<dividend> ÷ <divisor> = ?" — dividend may be an
+          // integer (trailing zeros trimmed), divisor always shows ≥1 dp.
+          const m = q.questionText.match(/^(\d+(?:\.\d+)?) ÷ (\d+\.\d+) = \?$/);
+          assert(m, 'malformed prompt: ' + q.questionText);
+          const a = parseFloat(m[1]);
+          const b = parseFloat(m[2]);
+          // The kid divides a by b and must get the stored answer (the quotient)
+          assert(Math.abs(a / b - q.answer) < 1e-6,
+                 `quotient mismatch: ${a}/${b}=${a / b} vs answer ${q.answer}`);
+          // Answer itself must be representable in ≤3 dp (within submitDecimal's
+          // 0.005 tolerance the kid can always type it exactly).
+          const ansStr = q.answer.toFixed(3);
+          assert(Math.abs(q.answer - parseFloat(ansStr)) < 1e-9,
+                 'answer not ≤3 dp: ' + q.answer);
+          assert(q.answer >= 1 && q.answer < 10, 'quotient out of [1,10): ' + q.answer);
+        }
+        assert(sawDp1, '1 dp divisor never sampled');
+        assert(sawDp2, '2 dp divisor never sampled');
+        assert(sawDp3, '3 dp divisor never sampled');
       });
 
       // ------ genNumberLine (P2.2) ------
@@ -370,8 +453,9 @@
       test('genCircle question text contains the radius value', () => {
         for (let i = 0; i < 100; i++) {
           const q = K.gen.circle();
-          assert(q.questionText.includes(String(q.r)),
-            'r=' + q.r + ' not in question: ' + q.questionText);
+          const en = K.formatQuestion(q, 'en').questionText;
+          assert(en.includes(String(q.r)),
+            'r=' + q.r + ' not in question: ' + en);
         }
       });
 
@@ -504,6 +588,151 @@
           assert(g(q.answerNum, q.answerDen) === 1,
             'not reduced: ' + q.answerNum + '/' + q.answerDen);
         }
+      });
+
+      // ------ Eliyahu dice generators (card pbowJEhf) ------
+      test('genDicePips face is an integer 1..6', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.dicePips();
+          assert(Number.isInteger(q.face) && q.face >= 1 && q.face <= 6, 'bad face: ' + q.face);
+          assert(q.answer === q.face, 'answer ≠ face: ' + q.answer + '/' + q.face);
+          assert(q.kind === 'dice-pips', 'bad kind: ' + q.kind);
+        }
+      });
+
+      test('genDiceNumber face is an integer 1..6', () => {
+        for (let i = 0; i < 300; i++) {
+          const q = K.gen.diceNumber();
+          assert(Number.isInteger(q.face) && q.face >= 1 && q.face <= 6, 'bad face: ' + q.face);
+          assert(q.answer === q.face, 'answer ≠ face: ' + q.answer + '/' + q.face);
+          assert(q.kind === 'dice-number', 'bad kind: ' + q.kind);
+        }
+      });
+
+      test('dice choices: exactly 3, unique, include the answer, all 1..6', () => {
+        for (const gen of [K.gen.dicePips, K.gen.diceNumber]) {
+          for (let i = 0; i < 300; i++) {
+            const q = gen();
+            assert(q.choices.length === 3, 'expected 3 choices, got ' + q.choices.length);
+            assert(new Set(q.choices).size === 3, 'choices not unique: ' + q.choices);
+            assert(q.choices.includes(q.answer), 'answer ' + q.answer + ' missing from ' + q.choices);
+            assert(q.choices.every(n => n >= 1 && n <= 6), 'choice out of range: ' + q.choices);
+          }
+        }
+      });
+
+      test('diceChoices(answer, count) honours count and always includes the answer', () => {
+        for (let a = 1; a <= 6; a++) {
+          for (const c of [2, 3, 4]) {
+            const ch = K.diceChoices(a, c);
+            assert(ch.length === c, 'wrong count: ' + ch.length + ' for ' + c);
+            assert(new Set(ch).size === c, 'not unique: ' + ch);
+            assert(ch.includes(a), 'answer ' + a + ' missing from ' + ch);
+          }
+        }
+      });
+
+      test('both dice faces eventually appear across all 6 values', () => {
+        const seen = new Set();
+        for (let i = 0; i < 600; i++) seen.add(K.gen.dicePips().face);
+        assert(seen.size === 6, 'not all 6 faces produced: ' + [...seen].sort());
+      });
+
+      test('ELI_MODULES exposes the two play-cube modules', () => {
+        assert(Array.isArray(K.ELI_MODULES) && K.ELI_MODULES.length === 2, 'expected 2 modules');
+        const keys = K.ELI_MODULES.map(m => m.key).sort();
+        assert(keys.join(',') === 'num,pips', 'bad module keys: ' + keys);
+      });
+
+      // ------ formatQuestion (lGNRlF0p regression) ------
+      // The English locale used to leave the Place-value, Percent, Measurements, and
+      // Circle prompts in Hebrew because the generators pre-rendered the prose at
+      // creation time. Generators now store language-agnostic params and
+      // formatQuestion(q, lang) is the single source of truth for display strings.
+      test('formatQuestion(place-value, en) renders English prose with named place', () => {
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.placeValue();
+          const en = K.formatQuestion(q, 'en').subQuestion;
+          assert(en === 'Which digit is in the ' + q.placeKey + ' place?',
+            'EN prompt wrong: ' + en);
+          assert(!/[֐-׿]/.test(en), 'EN prompt contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(place-value, he) renders Hebrew prose with named place', () => {
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.placeValue();
+          const he = K.formatQuestion(q, 'he').subQuestion;
+          assert(/^איזו ספרה במקום ה.+\?$/.test(he), 'HE prompt wrong: ' + he);
+        }
+      });
+
+      test('formatQuestion(percent-whole, en/he) renders the percent prose in current lang', () => {
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.percentWhole();
+          const en = K.formatQuestion(q, 'en').questionText;
+          const he = K.formatQuestion(q, 'he').questionText;
+          assert(en === q.p + '% of ' + q.base + ' = ?', 'EN wrong: ' + en);
+          assert(he === 'כמה זה ' + q.p + '% מ-' + q.base + '?', 'HE wrong: ' + he);
+          assert(!/[֐-׿]/.test(en), 'EN percent-whole contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(percent-decimal, en/he) renders the percent prose in current lang', () => {
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.percentDecimal();
+          const en = K.formatQuestion(q, 'en').questionText;
+          const he = K.formatQuestion(q, 'he').questionText;
+          assert(en === q.p + '% of ' + q.baseStr + ' = ?', 'EN wrong: ' + en);
+          assert(he === 'כמה זה ' + q.p + '% מ-' + q.baseStr + '?', 'HE wrong: ' + he);
+          assert(!/[֐-׿]/.test(en), 'EN percent-decimal contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(measurements, en) renders English unit labels', () => {
+        const allowedEn = new Set(['m', 'cm', 'mm']);
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.measurements();
+          const en = K.formatQuestion(q, 'en').questionText;
+          // Match pattern: "<num> <unit> = ? <unit>"
+          const m = en.match(/^[\d.]+ (m|cm|mm) = \? (m|cm|mm)$/);
+          assert(m, 'EN measurements format wrong: ' + en);
+          assert(allowedEn.has(m[1]) && allowedEn.has(m[2]), 'EN units wrong: ' + m[1] + '/' + m[2]);
+          assert(!/[֐-׿]/.test(en), 'EN measurements contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion(measurements, he) renders Hebrew unit labels', () => {
+        for (let i = 0; i < 30; i++) {
+          const q = K.gen.measurements();
+          const he = K.formatQuestion(q, 'he').questionText;
+          // Hebrew labels: מ׳ / ס״מ / מ״מ
+          assert(/[֐-׿]/.test(he), 'HE measurements has no Hebrew: ' + he);
+        }
+      });
+
+      test('formatQuestion(circle, en) renders English geometry prose with r value', () => {
+        for (let i = 0; i < 20; i++) {
+          const q = K.gen.circle();
+          const en = K.formatQuestion(q, 'en').questionText;
+          const expected = (q.direction === 'area' ? 'Area' : 'Perimeter') +
+                           ' of a circle, r = ' + q.r;
+          assert(en === expected, 'EN circle wrong: ' + en);
+          assert(!/[֐-׿]/.test(en), 'EN circle contains Hebrew: ' + en);
+        }
+      });
+
+      test('formatQuestion is pure — same q yields same output for the same lang', () => {
+        const q = K.gen.placeValue();
+        const a = K.formatQuestion(q, 'en').subQuestion;
+        const b = K.formatQuestion(q, 'en').subQuestion;
+        assert(a === b, 'formatQuestion not pure: ' + a + ' vs ' + b);
+      });
+
+      test('formatQuestion handles unknown kind via passthrough', () => {
+        const q = { kind: 'unit-conv', questionText: '0.3 = ?/10', subQuestion: '', answer: 3 };
+        const fmt = K.formatQuestion(q, 'en');
+        assert(fmt.questionText === '0.3 = ?/10', 'passthrough broken: ' + fmt.questionText);
       });
 
       finish();
