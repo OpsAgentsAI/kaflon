@@ -6,7 +6,7 @@ sessions (Trello [AmT5BqIb](https://trello.com/c/AmT5BqIb) — Moshe, web /
 [qYuIOa8b](https://trello.com/c/qYuIOa8b) — Libi) **before** sending.
 
 - **Repo:** https://github.com/OpsAgentsAI/kaflon
-- **Live:** https://kaflon.web.app
+- **Live:** https://kaflon.opsagents.agency
 - **License:** MIT
 
 > **Voice rules.** Personal posts = Michal, first person. Hebrew personal voice =
@@ -50,7 +50,7 @@ sessions (Trello [AmT5BqIb](https://trello.com/c/AmT5BqIb) — Moshe, web /
 
 **Body (~190 words):**
 
-> Over an afternoon I used Claude Code to build [Kaflon](https://kaflon.web.app) — a small
+> Over an afternoon I used Claude Code to build [Kaflon](https://kaflon.opsagents.agency) — a small
 > math-drill app for my own kids. It grew into something other parents might want to fork.
 >
 > Honestly, what it is:
@@ -80,7 +80,7 @@ sessions (Trello [AmT5BqIb](https://trello.com/c/AmT5BqIb) — Moshe, web /
 > 4-step "Learn" tutorial mode (explain → example → guided practice with a hint-when-stuck
 > → drill), and full Hebrew/English RTL+LTR on every screen. The whole thing is
 > fork-and-edit friendly — swap the question generators and it's your kid's app.
-> Live: https://kaflon.web.app · Code: https://github.com/OpsAgentsAI/kaflon
+> Live: https://kaflon.opsagents.agency · Code: https://github.com/OpsAgentsAI/kaflon
 > `[SCREENSHOT]`
 
 ---
@@ -90,7 +90,7 @@ sessions (Trello [AmT5BqIb](https://trello.com/c/AmT5BqIb) — Moshe, web /
 > שיתוף קטן להורים: יש לי משחק חינמי ופשוט לתרגול חשבון לילדים — בעברית, בלי פרסומות
 > ובלי הרשמה. לכל ילד/ה יש פרופיל משלו, יש מצב "הסבר" שמלמד שלב-שלב לפני התרגול, והכול
 > עובד גם בעברית וגם באנגלית. פשוט נכנסים מהדפדפן בטלפון או בטאבלט ומתחילים. משתפת בשמחה
-> אם זה יכול לעזור גם לכן: https://kaflon.web.app
+> אם זה יכול לעזור גם לכן: https://kaflon.opsagents.agency
 >
 > `[SCREENSHOT: מסך תרגול בעברית]`
 

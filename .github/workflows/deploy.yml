@@ -12,14 +12,14 @@ permissions:
   pull-requests: write
 
 env:
-  WIF_PROVIDER: projects/523955774086/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
-  WIF_SA: gha-deployer@opsagent-prod.iam.gserviceaccount.com
-  FIREBASE_PROJECT: opsagent-prod
+  WIF_PROVIDER: projects/408696318105/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
+  WIF_SA: kaflon-deployer@kaflon-prod.iam.gserviceaccount.com
+  FIREBASE_PROJECT: kaflon-prod
   HOSTING_TARGET: kaflon
 
 jobs:
   deploy_live:
-    name: Deploy live (kaflon.web.app)
+    name: Deploy live (kaflon.opsagents.agency)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency:

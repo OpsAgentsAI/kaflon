@@ -5,7 +5,7 @@
 Free, MIT-licensed multiplication, division, and decimals practice toy for kids. **One HTML file, no build step.** "View Source" is the documentation. Built for one parent's kid; designed for any parent to fork and adapt for theirs.
 
 Two surfaces share the same game logic:
-- **Web app** (this repo) — Firebase Hosting at `kaflon.web.app`
+- **Web app** (this repo) — Firebase Hosting at `kaflon.opsagents.agency`
 - **Cardputer-Adv MicroPython app** — `apps/kaflon.py` in [OpsAgentsAI/anthropic-adv](https://github.com/OpsAgentsAI/anthropic-adv)
 
 ## Tech Stack
@@ -14,7 +14,7 @@ Two surfaces share the same game logic:
 - Tailwind via CDN — no PostCSS, no `tailwind.config.js`
 - Vanilla JS, no framework, no bundler
 - `localStorage` for all state
-- Firebase Hosting on GCP project `opsagent-prod`, site `kaflon` (credit-covered through 2028)
+- Firebase Hosting on GCP project `kaflon-prod`, site `kaflon-prod` (per-app isolation; credit-covered through 2028)
 
 ## Code Conventions
 
@@ -39,7 +39,7 @@ Two surfaces share the same game logic:
 - Tailwind CDN only
 - MIT license stays MIT
 - Hebrew RTL + English LTR both first-class
-- Firebase Hosting on `opsagent-prod`. The old `opsagentsai.github.io/kaflon` GitHub Pages mirror is being phased out — don't add it back to docs
+- Firebase Hosting on `kaflon-prod` (moved off shared `opsagent-prod` in the per-app isolation migration; `kaflon.web.app` is dead — canonical URL is `kaflon.opsagents.agency`). The old `opsagentsai.github.io/kaflon` GitHub Pages mirror is being phased out — don't add either back to docs
 
 If a feature would break any of these, the answer is "fork it."
 
@@ -53,11 +53,11 @@ If a feature would break any of these, the answer is "fork it."
 
 ## Quick Reference
 
-- **Live:** <https://kaflon.web.app>
+- **Live:** <https://kaflon.opsagents.agency>
 - **Trello board:** <https://trello.com/b/IOKRU1eM/kaflon>
 - **Local dev:** open `index.html` directly in your browser. No dev server. Reload to see changes
 - **Test before commit:** toggle Heb↔Eng (RTL must not break), resize to 375px (tap targets must stay ≥44px)
-- **Deploy:** push to `main` → Firebase Hosting auto-deploys (once GHA workflow lands; currently operator-driven via cli-gateway warm-instance pattern)
+- **Deploy:** push to `main` → GHA `deploy.yml` → Firebase Hosting (`kaflon-prod` via `kaflon-deployer@kaflon-prod` WIF). PRs get a 7-day preview channel
 
 ## Community PRs
 
