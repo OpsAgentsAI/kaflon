@@ -1,12 +1,12 @@
 {
   "projects": {
-    "default": "opsagent-prod"
+    "default": "kaflon-prod"
   },
   "targets": {
-    "opsagent-prod": {
+    "kaflon-prod": {
       "hosting": {
         "kaflon": [
-          "kaflon"
+          "kaflon-prod"
         ]
       }
     }

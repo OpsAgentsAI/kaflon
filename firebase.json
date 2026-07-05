@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "kaflon",
+    "target": "kaflon",
     "public": ".",
     "ignore": [
       "firebase.json",
