@@ -1,8 +1,23 @@
-name: Deploy to Firebase Hosting
+name: Preview deploy (PRs)
+
+# DEPLOY OWNERSHIP — card ROkNaunZ, decided 2026-09-05.
+#
+# The live site https://kaflon.opsagents.agency (Firebase Hosting site
+# `kaflon-prod`) is owned EXCLUSIVELY by the private repo OpsAgentsAI/kaflon-app.
+# This repo deploys PREVIEW CHANNELS ONLY and never touches the live channel.
+#
+# Why: both repos used to deploy `index.html` to the same site, so whichever
+# pushed to `main` last overwrote the other. The two files have diverged and the
+# divergence is load-bearing — `kaflon-app/index.html` carries the mandatory GA4
+# baseline (G-074QC2MLHB), which THIS repo can never carry because "no analytics
+# that phone home" is a hard constraint here (CLAUDE.md). So a live deploy from
+# this repo silently killed the analytics baseline with no alarm.
+#
+# Do NOT re-add a job that writes the live channel. If live deploy ever needs to
+# move back here, the GA4 baseline has to move with it and the constraint above
+# has to be renegotiated first.
 
 on:
-  push:
-    branches: [main]
   pull_request:
     types: [opened, reopened, synchronize]
 
@@ -18,36 +33,8 @@ env:
   HOSTING_TARGET: kaflon
 
 jobs:
-  deploy_live:
-    name: Deploy live (kaflon.opsagents.agency)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-live
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud (WIF)
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.WIF_SA }}
-
-      - name: Install firebase-tools
-        run: npm install -g firebase-tools@latest
-
-      - name: Deploy to Firebase Hosting (live)
-        run: |
-          firebase deploy \
-            --only "hosting:${HOSTING_TARGET}" \
-            --project "${FIREBASE_PROJECT}" \
-            --non-interactive \
-            --force
-
   deploy_preview:
     name: Deploy preview channel (PR)
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-preview-${{ github.event.pull_request.number }}
@@ -64,6 +51,8 @@ jobs:
       - name: Install firebase-tools
         run: npm install -g firebase-tools@latest
 
+      # `hosting:channel:deploy` writes a NAMED channel, never the live channel,
+      # so this is safe on the same site that kaflon-app serves live from.
       - name: Deploy to preview channel
         id: preview
         run: |
@@ -76,7 +65,7 @@ jobs:
             --expires 7d \
             --non-interactive \
             --json 2>&1 | tee preview-output.json
-          URL=$(jq -r '.result["'${HOSTING_TARGET}'"].url' preview-output.json)
+          URL=$(jq -r --arg t "${HOSTING_TARGET}" '.result[$t].url' preview-output.json)
           echo "url=${URL}" >> "$GITHUB_OUTPUT"
 
       - name: Comment preview URL on PR
@@ -84,7 +73,7 @@ jobs:
         with:
           script: |
             const url = '${{ steps.preview.outputs.url }}';
-            const body = `🚀 **Preview deploy** — ${url}\n\n7 day TTL. Sandboxed channel ${`preview-${context.issue.number}`}.`;
+            const body = `🚀 **Preview deploy** — ${url}\n\n7 day TTL. Sandboxed channel ${`preview-${context.issue.number}`}.\n\nNote: this repo deploys preview channels only. The live site is deployed from \`kaflon-app\` (card ROkNaunZ).`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
