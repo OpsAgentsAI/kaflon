@@ -1,0 +1,5 @@
+# Card vqPxch28. The deploy-ownership rule (card ROkNaunZ — this repo
+# deploys PREVIEW CHANNELS ONLY, never the live channel) was enforced only by
+# a comment at the top of deploy.yml. Requiring review on this directory
+# means re-adding a live-write job needs a human to see it, not just a push.
+/.github/  @MichalOpsAgents
