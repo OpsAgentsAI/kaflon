@@ -1,0 +1,74 @@
+name: GA4 canary
+
+# Card vqPxch28 (deploy-ownership rule ROkNaunZ closed the public-repo live-
+# deploy vector; this closes the "no alarm if it regresses anyway" gap).
+#
+# The LIVE site https://kaflon.opsagents.agency is deployed by the private
+# repo kaflon-app (deploy.yml's header explains why), and its index.html
+# carries the mandatory GA4 baseline tag G-074QC2MLHB — a constraint THIS
+# repo's own index.html can never carry (CLAUDE.md: "no analytics that phone
+# home" is a hard boundary here). So this canary watches a tag that lives in
+# a different repo's deployed output, on purpose: the regression it exists to
+# catch can come from a live-deploy re-added anywhere (this repo, kaflon-app,
+# a Hosting rollback) — the card's own thesis is that the failure mode is
+# always silent, regardless of source.
+#
+# Three-valued by design, never two: PASS (tag present) / FAIL (tag absent
+# from a real 200 response) / CANNOT-MEASURE (non-200, or an empty/too-short
+# body — a probe that could not look must exit non-zero, never silently pass
+# as if it had looked and found nothing wrong).
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to check (defaults to the live site — set this to prove the canary red against a URL known not to carry the tag)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    name: Live site still carries the GA4 baseline tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check for G-074QC2MLHB on the target site
+        env:
+          # workflow_dispatch input, or the real live site when empty/absent
+          # (a scheduled run has no `inputs` context at all).
+          TARGET_URL: ${{ github.event.inputs.url || 'https://kaflon.opsagents.agency/' }}
+        run: |
+          set -u
+          echo "Checking $TARGET_URL"
+
+          http_code=$(curl -s -o /tmp/canary-body.html -w '%{http_code}' --max-time 15 "$TARGET_URL") || {
+            echo "::error::CANNOT-MEASURE — curl itself failed against $TARGET_URL (network/DNS/TLS). This is NOT a pass."
+            exit 1
+          }
+          echo "HTTP status: $http_code"
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::CANNOT-MEASURE — $TARGET_URL returned HTTP $http_code, not 200. A probe that could not look must not be silent — this is NOT a pass."
+            exit 1
+          fi
+
+          body_bytes=$(wc -c < /tmp/canary-body.html)
+          # 100 bytes is well below any real HTML document this app could
+          # serve (index.html alone is ~150KB) — this is a floor against an
+          # empty or truncated body, not a content-shape check.
+          if [ "$body_bytes" -lt 100 ]; then
+            echo "::error::CANNOT-MEASURE — $TARGET_URL returned a $body_bytes-byte body, too small to be a real page. This is NOT a pass."
+            exit 1
+          fi
+
+          if grep -q 'G-074QC2MLHB' /tmp/canary-body.html; then
+            echo "PASS — GA4 baseline tag present on $TARGET_URL ($body_bytes bytes)."
+          else
+            echo "::error::FAIL — GA4 baseline tag G-074QC2MLHB is MISSING from $TARGET_URL ($body_bytes bytes received). The analytics baseline may have silently regressed (card ROkNaunZ / vqPxch28) — check for a live deploy from this repo or a rollback on kaflon-app."
+            exit 1
+          fi
