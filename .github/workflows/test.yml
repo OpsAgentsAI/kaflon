@@ -10,6 +10,22 @@ permissions:
   contents: read
 
 jobs:
+  # ⚖️ 09PBYCJY rule 2 (card vPrDDPM3): enforces that no pull_request-reachable
+  # job in this repo mints a cloud identity. Identity-free by construction —
+  # this job holds no id-token and calls no cloud-auth action, so it can safely
+  # run on every PR, fork included. See scripts/wif-pr-reachability.test.mjs
+  # for the full incident writeup.
+  wif-pr-reachability:
+    name: WIF PR-reachability guard (09PBYCJY rule 2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node --test scripts/wif-pr-reachability.test.mjs
+
   unit:
     name: Run tests.html in headless Chromium
     runs-on: ubuntu-latest
