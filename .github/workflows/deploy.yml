@@ -1,4 +1,4 @@
-name: Preview deploy (PRs)
+name: Preview deploy (dispatch, verified)
 
 # DEPLOY OWNERSHIP — card ROkNaunZ, decided 2026-09-05.
 #
@@ -16,15 +16,50 @@ name: Preview deploy (PRs)
 # Do NOT re-add a job that writes the live channel. If live deploy ever needs to
 # move back here, the GA4 baseline has to move with it and the constraint above
 # has to be renegotiated first.
+#
+# ⚖️ CTO ruling 09PBYCJY rule 2 (card vPrDDPM3): no `pull_request`-triggered job
+# may mint a deploy identity, on ANY runner. This file used to be exactly that —
+# ONE `deploy_preview` job, `id-token: write` at WORKFLOW level, triggering on
+# `pull_request`, authenticating to `kaflon-deployer@kaflon-prod` — and it had NO
+# fork guard at all. On most repos an absent fork guard is softened because fork
+# PRs receive no secrets, so a `secrets.WIF_PROVIDER` reference resolves empty
+# and auth fails. THAT DID NOT APPLY HERE: the provider and the service account
+# were HARDCODED LITERALS in `env:`, so the auth step needed no secret — the
+# same sharp shape found on opsagents-ilcf-medinfo (card j2gmJo6j), whose fix
+# this file follows.
+#
+# ⚠️ WHY THE DEPLOY MOVED TO `workflow_dispatch` rather than staying on
+# `pull_request` behind an `if:` guard. A job-level event gate is CODE, and on a
+# same-repo `pull_request` GitHub evaluates the workflow file FROM THE PR HEAD —
+# so a PR that deletes that one line runs the deploy job, as that PR, with the
+# prod-project identity. The gate would be guarding itself. A workflow with no
+# `pull_request` trigger at all cannot be reached that way, and
+# `scripts/wif-pr-reachability.test.mjs` (run on every PR by test.yml) is what
+# stops a PR from adding the trigger back.
+#
+# Trade-off, stated plainly: previews are no longer automatic on every push —
+# something with `actions: write` (never a cloud identity) must dispatch this
+# workflow with the PR's number and current head sha. `verify-pr` below refuses
+# unless that PR is open, same-repo, still at the dispatched head, and its own
+# PR gate is green — so a dispatch can never smuggle in an unreviewed or
+# fork-controlled tree.
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to build a preview channel for
+        required: true
+        type: string
+      head_sha:
+        description: Full 40-char head sha you intend to deploy (must still be the PR head)
+        required: true
+        type: string
 
+# No `id-token` at the workflow level. `verify-pr` holds none at all;
+# `deploy_preview` declares its own job-level block below.
 permissions:
   contents: read
-  id-token: write
-  pull-requests: write
 
 env:
   WIF_PROVIDER: projects/408696318105/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
@@ -32,15 +67,75 @@ env:
   FIREBASE_PROJECT: kaflon-prod
   HOSTING_TARGET: kaflon
 
+concurrency:
+  group: deploy-preview-${{ inputs.pr_number }}
+  cancel-in-progress: true
+
 jobs:
+  verify-pr:
+    # ⚠️ MUST hold no cloud identity. If it could mint, moving the check earlier
+    # buys nothing.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      head_sha: ${{ steps.check.outputs.head_sha }}
+    steps:
+      - name: Verify the PR is open, same-repo, and still at the dispatched head
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          WANT_SHA: ${{ inputs.head_sha }}
+        run: |
+          set -euo pipefail
+
+          case "$PR_NUMBER" in ''|*[!0-9]*) echo "::error::pr_number must be digits, got '$PR_NUMBER'"; exit 1;; esac
+          case "$WANT_SHA" in *[!0-9a-fA-F]*|'') echo "::error::head_sha must be hex, got '$WANT_SHA'"; exit 1;; esac
+          if [ "${#WANT_SHA}" -ne 40 ]; then
+            echo "::error::head_sha must be the FULL 40-char sha (got ${#WANT_SHA}). An abbreviated sha cannot be compared exactly."
+            exit 1
+          fi
+
+          PR_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")
+          STATE=$(printf '%s' "$PR_JSON" | jq -r '.state')
+          HEAD_REPO=$(printf '%s' "$PR_JSON" | jq -r '.head.repo.full_name')
+          HEAD_SHA=$(printf '%s' "$PR_JSON" | jq -r '.head.sha')
+
+          echo "PR #${PR_NUMBER}: state=$STATE head_repo=$HEAD_REPO head=$HEAD_SHA"
+
+          [ "$STATE" = "open" ] || { echo "::error::PR #${PR_NUMBER} is '$STATE', not open."; exit 1; }
+          [ "$HEAD_REPO" = "$GITHUB_REPOSITORY" ] || {
+            echo "::error::PR #${PR_NUMBER} head is '$HEAD_REPO', not '$GITHUB_REPOSITORY' — fork PRs are refused."; exit 1; }
+          [ "$HEAD_SHA" = "$WANT_SHA" ] || {
+            echo "::error::PR #${PR_NUMBER} head moved: dispatched '$WANT_SHA', live '$HEAD_SHA'. Re-dispatch with the current sha."; exit 1; }
+
+          # The PR gate must be green on the sha being deployed. Name measured
+          # live via `gh api .../check-runs` — it is the job's `name:` field
+          # ("Run tests.html in headless Chromium" in test.yml), not the yaml
+          # job key.
+          CHECKS=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/check-runs?per_page=100")
+          CONC=$(printf '%s' "$CHECKS" | jq -r '[.check_runs[] | select(.name == "Run tests.html in headless Chromium")] | sort_by(.started_at) | last | .conclusion // "missing"')
+          [ "$CONC" = "success" ] || { echo "::error::PR gate 'Run tests.html in headless Chromium' is '$CONC' on ${HEAD_SHA} (need 'success')."; exit 1; }
+
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "::notice::PR #${PR_NUMBER} verified at ${HEAD_SHA} — proceeding."
+
   deploy_preview:
     name: Deploy preview channel (PR)
+    needs: [verify-pr]
     runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-preview-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
     steps:
+      # Pin the ref to the VERIFIED sha — not to the branch, which can move
+      # between verification and checkout.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify-pr.outputs.head_sha }}
 
       - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
@@ -53,10 +148,18 @@ jobs:
 
       # `hosting:channel:deploy` writes a NAMED channel, never the live channel,
       # so this is safe on the same site that kaflon-app serves live from.
+      # --no-authorized-domains: without it, firebase-tools PATCHes this
+      # channel's URL into kaflon-prod's Identity Platform `authorizedDomains`
+      # on every deploy (the G3 trap; QR5Q8Hyk / training-console#18 and
+      # opsagents-ilcf-medinfo#9 closed the same class). This repo has no
+      # Firebase Auth wiring, so the sync buys nothing and only grows a shared
+      # project's auth surface.
       - name: Deploy to preview channel
         id: preview
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          CHANNEL="preview-${{ github.event.pull_request.number }}"
+          CHANNEL="preview-${PR_NUMBER}"
           # tee (not >) so firebase's --json error payload stays visible in the log on failure
           set -o pipefail
           firebase hosting:channel:deploy "${CHANNEL}" \
@@ -64,18 +167,22 @@ jobs:
             --project "${FIREBASE_PROJECT}" \
             --expires 7d \
             --non-interactive \
+            --no-authorized-domains \
             --json 2>&1 | tee preview-output.json
           URL=$(jq -r --arg t "${HOSTING_TARGET}" '.result[$t].url' preview-output.json)
           echo "url=${URL}" >> "$GITHUB_OUTPUT"
 
       - name: Comment preview URL on PR
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
             const url = '${{ steps.preview.outputs.url }}';
-            const body = `🚀 **Preview deploy** — ${url}\n\n7 day TTL. Sandboxed channel ${`preview-${context.issue.number}`}.\n\nNote: this repo deploys preview channels only. The live site is deployed from \`kaflon-app\` (card ROkNaunZ).`;
+            const prNumber = Number(process.env.PR_NUMBER);
+            const body = `🚀 **Preview deploy** — ${url}\n\n7 day TTL. Sandboxed channel \`preview-${prNumber}\`.\n\nNote: this repo deploys preview channels only. The live site is deployed from \`kaflon-app\` (card ROkNaunZ).`;
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: prNumber,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body
