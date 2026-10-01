@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: node --test scripts/wif-pr-reachability.test.mjs
+      - run: node --test scripts/wif-pr-reachability.test.mjs scripts/hosting-ignore-gha-creds.test.mjs
 
   unit:
     name: Run tests.html in headless Chromium
