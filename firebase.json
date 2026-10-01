@@ -10,7 +10,8 @@
       "README.md",
       "LICENSE",
       ".github/**",
-      "*.md"
+      "*.md",
+      "gha-creds-*.json"
     ],
     "headers": [
       {
